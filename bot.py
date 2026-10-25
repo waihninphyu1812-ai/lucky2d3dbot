@@ -33,7 +33,7 @@ threading.Thread(target=start_health_server, daemon=True).start()
 
 # Bot Token & Admin အချက်အလက်များ
 TOKEN = '8988776248:AAFj84YUTvHfWXjH-Mc4fPgbkx-MjR6ytG8'
-ADMIN_USERNAME = "Sno78".lstrip('@')  # @ ပါပါ မပါပါ အလိုအလျောက် ရှင်းထုတ်ပေးပါသည်
+ADMIN_USERNAME = "Sno78".lstrip('@')
 ADMIN_EMAIL = "waihninphyu1812@gmail.com"
 
 def get_main_menu():
@@ -41,7 +41,7 @@ def get_main_menu():
         [KeyboardButton("💰 ငွေသွင်း/ငွေထုတ်"), KeyboardButton("💵 ငွေလက်ကျန်")],
         [KeyboardButton("🎯 2D ထိုး"), KeyboardButton("🎯 3D ထိုး")],
         [KeyboardButton("📜 ထိုးခဲ့သော မှတ်တမ်းများ"), KeyboardButton("🏆 ထီပေါက်စဉ်")],
-        [KeyboardButton("👩💻 Admin Account"), KeyboardButton("🎮 Game ဆော့ရန်")],
+        [KeyboardButton("👩‍💻 Admin Account"), KeyboardButton("🎮 Game ဆော့ရန်")],
         [KeyboardButton("🏠 Home")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
@@ -65,37 +65,37 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     text = update.message.text
 
-    if text == "🎯 2D ထိုး":
+    if "2D ထိုး" in text:
         is_open, msg = is_2d_open()
         if not is_open:
             await update.message.reply_text(msg)
         else:
             await update.message.reply_text("🎯 2D ထိုးရန် Format:\nဂဏန်း=ငွေပမာဏ (ဥပမာ - 45=500)")
-    elif text == "👩💻 Admin Account":
+    elif "Admin" in text or "admin" in text:
         inline_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("💬 Telegram ဖြင့် တိုက်ရိုက် စကားပြောရန်", url=f"https://t.me/{ADMIN_USERNAME}")],
-            [InlineKeyboardButton("📧 Email တိုက်ရိုက် ပို့ရန်", url=f"mailto:{ADMIN_EMAIL}")]
+            [InlineKeyboardButton("💬 Admin Telegram နှင့် စကားပြောရန်", url=f"https://t.me/{ADMIN_USERNAME}")],
+            [InlineKeyboardButton("📧 Gmail ဖြင့် တိုက်ရိုက် စာပို့ရန်", url=f"https://mail.google.com/mail/?view=cm&fs=1&to={ADMIN_EMAIL}")]
         ])
         msg = (
             "👇 <b>Admin နှင့် တိုက်ရိုက် ဆက်သွယ်ရန်</b> 👇\n\n"
             f"👤 <b>Admin Telegram:</b> @{ADMIN_USERNAME}\n"
             f"📧 <b>Admin Email:</b> <code>{ADMIN_EMAIL}</code>\n\n"
-            "အောက်ပါ ခလုတ်များကို နှိပ်ပြီး တိုက်ရိုက် ဆက်သွယ်နိုင်ပါသည်ခင်ဗျာ။"
+            "အထက်ပါ Email ကို နှိပ်ပြီးဖြစ်စေ၊ အောက်က ခလုတ်ကို နှိပ်ပြီးဖြစ်စေ တိုက်ရိုက် ဆက်သွယ်နိုင်ပါသည်ခင်ဗျာ။"
         )
         await update.message.reply_text(msg, parse_mode="HTML", reply_markup=inline_kb)
-    elif text == "💵 ငွေလက်ကျန်":
+    elif "ငွေလက်ကျန်" in text:
         await update.message.reply_text("💵 သင့်လက်ကျန်ငွေ: 0 ကျပ်")
-    elif text == "💰 ငွေသွင်း/ငွေထုတ်":
+    elif "ငွေသွင်း/ငွေထုတ်" in text:
         await update.message.reply_text("ငွေသွင်း/ငွေထုတ် ပြုလုပ်ရန် Admin ကို ဆက်သွယ်ပါခင်ဗျာ။")
-    elif text == "🎯 3D ထိုး":
+    elif "3D ထိုး" in text:
         await update.message.reply_text("🎯 3D ထိုးရန် Format:\nဂဏန်း=ငွေပမာဏ (ဥပမာ - 789=1000)")
-    elif text == "📜 ထိုးခဲ့သော မှတ်တမ်းများ":
+    elif "မှတ်တမ်း" in text:
         await update.message.reply_text("📜 ယခုပွဲအတွက် ထိုးထားသော စာရင်းများ မရှိသေးပါ။")
-    elif text == "🏆 ထီပေါက်စဉ်":
+    elif "ထီပေါက်စဉ်" in text:
         await update.message.reply_text("🏆 ယနေ့ ထွက်ဂဏန်းများကို စောင့်ကြည့်နေပါသည်...")
-    elif text == "🎮 Game ဆော့ရန်":
+    elif "Game" in text or "ဂိမ်း" in text:
         await update.message.reply_text("🎮 ဂိမ်းကဏ္ဍကို မကြာမီ မိတ်ဆက်ပေးပါမည်။")
-    elif text == "🏠 Home":
+    elif "Home" in text or "home" in text:
         await update.message.reply_text("🏠 ပင်မစာမျက်နှာသို့ ရောက်ရှိနေပါပြီ။", reply_markup=get_main_menu())
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
