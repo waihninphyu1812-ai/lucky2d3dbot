@@ -1,9 +1,13 @@
 import os
+import time
+import logging
 import threading
 from datetime import datetime, timezone, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 # Render Cloud Web Server (Port 10000 အတွက်)
 class HealthCheckHandler(BaseHTTPRequestHandler):
@@ -29,7 +33,7 @@ threading.Thread(target=start_health_server, daemon=True).start()
 
 # Bot Token & Admin အချက်အလက်များ
 TOKEN = '8988776248:AAFj84YUTvHfWXjH-Mc4fPgbkx-MjR6ytG8'
-ADMIN_USERNAME = "Sno78"
+ADMIN_USERNAME = "Sno78".lstrip('@')  # @ ပါပါ မပါပါ အလိုအလျောက် ရှင်းထုတ်ပေးပါသည်
 ADMIN_EMAIL = "waihninphyu1812@gmail.com"
 
 def get_main_menu():
@@ -43,10 +47,11 @@ def get_main_menu():
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "✨ မြန်မာ 2D/3D စနစ်မှ ကြိုဆိုပါသည် ✨\n\nမိမိ ပြုလုပ်လိုသည်ကို ရွေးချယ်ပါ-",
-        reply_markup=get_main_menu()
-    )
+    if update.message:
+        await update.message.reply_text(
+            "✨ မြန်မာ 2D/3D စနစ်မှ ကြိုဆိုပါသည် ✨\n\nမိမိ ပြုလုပ်လိုသည်ကို ရွေးချယ်ပါ-",
+            reply_markup=get_main_menu()
+        )
 
 def is_2d_open():
     tz_mm = timezone(timedelta(hours=6, minutes=30))
@@ -56,7 +61,10 @@ def is_2d_open():
     return True, "ဖွင့်လှစ်ထားပါသည်"
 
 async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or not update.message.text:
+        return
     text = update.message.text
+
     if text == "🎯 2D ထိုး":
         is_open, msg = is_2d_open()
         if not is_open:
@@ -69,12 +77,12 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("📧 Email တိုက်ရိုက် ပို့ရန်", url=f"mailto:{ADMIN_EMAIL}")]
         ])
         msg = (
-            "👇 *Admin နှင့် တိုက်ရိုက် ဆက်သွယ်ရန်* 👇\n\n"
-            f"👤 *Admin Telegram:* @{ADMIN_USERNAME}\n"
-            f"📧 *Admin Email:* `{ADMIN_EMAIL}`\n\n"
+            "👇 <b>Admin နှင့် တိုက်ရိုက် ဆက်သွယ်ရန်</b> 👇\n\n"
+            f"👤 <b>Admin Telegram:</b> @{ADMIN_USERNAME}\n"
+            f"📧 <b>Admin Email:</b> <code>{ADMIN_EMAIL}</code>\n\n"
             "အောက်ပါ ခလုတ်များကို နှိပ်ပြီး တိုက်ရိုက် ဆက်သွယ်နိုင်ပါသည်ခင်ဗျာ။"
         )
-        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=inline_kb)
+        await update.message.reply_text(msg, parse_mode="HTML", reply_markup=inline_kb)
     elif text == "💵 ငွေလက်ကျန်":
         await update.message.reply_text("💵 သင့်လက်ကျန်ငွေ: 0 ကျပ်")
     elif text == "💰 ငွေသွင်း/ငွေထုတ်":
@@ -90,9 +98,18 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif text == "🏠 Home":
         await update.message.reply_text("🏠 ပင်မစာမျက်နှာသို့ ရောက်ရှိနေပါပြီ။", reply_markup=get_main_menu())
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    print(f"Bot Error occurred: {context.error}")
+
 if __name__ == '__main__':
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler('start', start))
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_buttons))
-    print("🚀 Bot စတင် အလုပ်လုပ်နေပါပြီ...")
-    app.run_polling(drop_pending_updates=True)
+    while True:
+        try:
+            print("🚀 Bot စတင် အလုပ်လုပ်နေပါပြီ...")
+            app = ApplicationBuilder().token(TOKEN).build()
+            app.add_handler(CommandHandler('start', start))
+            app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_buttons))
+            app.add_error_handler(error_handler)
+            app.run_polling(drop_pending_updates=True)
+        except Exception as e:
+            print(f"Telegram connection error: {e}. Reconnecting in 5 seconds...")
+            time.sleep(5)
