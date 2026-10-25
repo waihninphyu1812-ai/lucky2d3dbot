@@ -5,6 +5,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
+# Render Cloud Web Server (Port 10000 အတွက်)
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -26,8 +27,10 @@ def start_health_server():
 
 threading.Thread(target=start_health_server, daemon=True).start()
 
+# Bot Token & Admin အချက်အလက်များ
 TOKEN = '8988776248:AAFj84YUTvHfWXjH-Mc4fPgbkx-MjR6ytG8'
-ADMIN_USERNAME = "lucky2d3d_mm_bot"
+ADMIN_USERNAME = "Sno78"
+ADMIN_EMAIL = "waihninphyu1812@gmail.com"
 
 def get_main_menu():
     keyboard = [
@@ -61,8 +64,17 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await update.message.reply_text("🎯 2D ထိုးရန် Format:\nဂဏန်း=ငွေပမာဏ (ဥပမာ - 45=500)")
     elif text == "👩💻 Admin Account":
-        inline_kb = InlineKeyboardMarkup([[InlineKeyboardButton("Admin", url=f"https://t.me/{ADMIN_USERNAME}")]])
-        await update.message.reply_text("👇 Admin နဲ့ တိုက်ရိုက်ဆက်သွယ်ရန် 👇", reply_markup=inline_kb)
+        inline_kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💬 Telegram ဖြင့် တိုက်ရိုက် စကားပြောရန်", url=f"https://t.me/{ADMIN_USERNAME}")],
+            [InlineKeyboardButton("📧 Email တိုက်ရိုက် ပို့ရန်", url=f"mailto:{ADMIN_EMAIL}")]
+        ])
+        msg = (
+            "👇 *Admin နှင့် တိုက်ရိုက် ဆက်သွယ်ရန်* 👇\n\n"
+            f"👤 *Admin Telegram:* @{ADMIN_USERNAME}\n"
+            f"📧 *Admin Email:* `{ADMIN_EMAIL}`\n\n"
+            "အောက်ပါ ခလုတ်များကို နှိပ်ပြီး တိုက်ရိုက် ဆက်သွယ်နိုင်ပါသည်ခင်ဗျာ။"
+        )
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=inline_kb)
     elif text == "💵 ငွေလက်ကျန်":
         await update.message.reply_text("💵 သင့်လက်ကျန်ငွေ: 0 ကျပ်")
     elif text == "💰 ငွေသွင်း/ငွေထုတ်":
@@ -83,4 +95,4 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start', start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_buttons))
     print("🚀 Bot စတင် အလုပ်လုပ်နေပါပြီ...")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
