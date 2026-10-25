@@ -64,19 +64,4 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif text == "📜 ထိုးခဲ့သော မှတ်တမ်းများ":
         await update.message.reply_text("📜 ယခုပွဲအတွက် ထိုးထားသော စာရင်းများ မရှိသေးပါ။")
 
-    elif text == "🏆 ထီပေါက်စဉ်":
-        await update.message.reply_text("🏆 ယနေ့ ထွက်ဂဏန်းများကို စောင့်ကြည့်နေပါသည်...")
-
-    elif text == "🎮 Game ဆော့ရန်":
-        await update.message.reply_text("🎮 ဂိမ်းကဏ္ဍကို မကြာမီ မိတ်ဆက်ပေးပါမည်။")
-
-    elif text == "🏠 Home":
-        await update.message.reply_text("🏠 ပင်မစာမျက်နှာသို့ ရောက်ရှိနေပါပြီ။", reply_markup=get_main_menu())
-
-if __name__ == '__main__':
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler('start', start))
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_buttons))
-
-    print("Bot စတင် အလုပ်လုပ်နေပါပြီ...")
-    app.run_polling()
+    elif text == "🏆 ထီပေါက်စဉ်"
