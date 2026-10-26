@@ -1,40 +1,19 @@
 import os
-import json
-import time
-import random
-import asyncio
-import logging
+import re
 import threading
-import urllib.request
+import requests
 from datetime import datetime, timezone, timedelta
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from telegram import (
-    Update,
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton
-)
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    ContextTypes,
-    filters
-)
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-
-# ==========================================
-# 1. RENDER CLOUD 24/7 WEB SERVER
-# ==========================================
+# ==================== RENDER WEB SERVER (PORT 10000) ====================
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain; charset=utf-8')
         self.end_headers()
-        self.wfile.write("Myanmar 2D/3D All-in-One Telegram Bot Running Live 24/7!".encode('utf-8'))
+        self.wfile.write("Myanmar & Thai 2D/3D Telegram Bot Running Live 24/7!".encode('utf-8'))
 
     def log_message(self, format, *args):
         return
@@ -43,683 +22,481 @@ def start_health_server():
     port = int(os.environ.get("PORT", 10000))
     try:
         server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
-        print(f"Web server started on port {port}")
         server.serve_forever()
     except Exception as e:
         print(f"Server error: {e}")
 
 threading.Thread(target=start_health_server, daemon=True).start()
 
-# ==========================================
-# 2. CONFIGURATION & ADMIN INFO (TELEGRAM ONLY)
-# ==========================================
+# ==================== BOT CREDENTIALS & ADMIN CONFIG ====================
 TOKEN = '8988776248:AAFj84YUTvHfWXjH-Mc4fPgbkx-MjR6ytG8'
-ADMIN_USERNAME = "Sno78".lstrip('@')
+ADMIN_USERNAME = "Sno78"
+ADMIN_EMAIL = "waihninphyu1812@gmail.com"
 
-USERS_FILE = "users.json"
-BETS_FILE = "bets_data.json"
-MARKET_FILE = "market_data.json"
-PAYMENT_FILE = "payment_data.json"
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+}
 
-# ==========================================
-# 3. DATA STORAGE & HELPERS
-# ==========================================
-def get_users():
-    if not os.path.exists(USERS_FILE):
-        return []
+# User bets and balances stored in memory
+user_bets = {}
+user_balances = {}
+
+# ==================== 2D & 3D DATA FETCHING ====================
+
+def fetch_2d_data():
+    """2D Live အချက်အလက်များကို ဆွဲယူခြင်း (Live မရှိပါက နောက်ဆုံးရလဒ်ကို အလိုအလျောက် ဆွဲယူသည်)"""
     try:
-        with open(USERS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return []
-
-def add_user(user_id):
-    users = set(get_users())
-    if user_id not in users:
-        users.add(user_id)
-        try:
-            with open(USERS_FILE, "w", encoding="utf-8") as f:
-                json.dump(list(users), f)
-        except Exception as e:
-            print(f"Error saving user: {e}")
-
-def get_user_bets(user_id):
-    if not os.path.exists(BETS_FILE):
-        return []
-    try:
-        with open(BETS_FILE, "r", encoding="utf-8") as f:
-            all_bets = json.load(f)
-            return all_bets.get(str(user_id), [])
-    except Exception:
-        return []
-
-def save_bet(user_id, bet_info):
-    all_bets = {}
-    if os.path.exists(BETS_FILE):
-        try:
-            with open(BETS_FILE, "r", encoding="utf-8") as f:
-                all_bets = json.load(f)
-        except Exception:
-            all_bets = {}
-
-    uid_str = str(user_id)
-    if uid_str not in all_bets:
-        all_bets[uid_str] = []
-
-    all_bets[uid_str].append(bet_info)
-    try:
-        with open(BETS_FILE, "w", encoding="utf-8") as f:
-            json.dump(all_bets, f, ensure_ascii=False, indent=2)
+        res = requests.get("https://api.thaistock2d.com/live", headers=HEADERS, timeout=8)
+        if res.status_code == 200:
+            data = res.json()
+            live = data.get("live", {})
+            # စတော့ဈေးကွက် ပိတ်ထားချိန် သို့မဟုတ် 0.00 ဖြစ်နေချိန်
+            if live.get("set") in ["0.00", "0", "-", None]:
+                res_prev = requests.get("https://api.thaistock2d.com/2d_result", headers=HEADERS, timeout=8)
+                if res_prev.status_code == 200:
+                    prev_data = res_prev.json()
+                    if isinstance(prev_data, list) and len(prev_data) > 0:
+                        latest_day = prev_data[0]
+                        return {"live": live, "result": latest_day.get("child", []), "history_date": latest_day.get("date")}
+            return data
     except Exception as e:
-        print(f"Error saving bet: {e}")
-
-def get_market_data():
-    default_data = {
-        "ak_gold": "၅,၆၈၀,၀၀၀ ကျပ် (ပြင်ပပေါက်ဈေး)",
-        "fifteen_gold": "၅,၃၂၀,၀၀၀ ကျပ်",
-        "world_gold": "$2,745 / oz (XAU/USD)",
-        "usd": "၄,၅၂၀ ကျပ် (ပြင်ပပေါက်ဈေး)",
-        "thb": "၁၃၂.၅ ကျပ် (၁ ဘတ်)",
-        "sgd": "၃,၄၂၀ ကျပ် (၁ ဒေါ်လာ)",
-        "myr": "၁,၀၄၀ ကျပ် (၁ ရင်းဂစ်)",
-        "updated_time": "ယနေ့ ဈေးကွက်ပေါက်ဈေး"
-    }
-    if not os.path.exists(MARKET_FILE):
-        return default_data
-    try:
-        with open(MARKET_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return default_data
-
-def save_market_data(ak, fifteen, world, usd, thb):
-    tz_mm = timezone(timedelta(hours=6, minutes=30))
-    now_str = datetime.now(tz_mm).strftime("%d-%m-%Y %I:%M %p")
-    data = get_market_data()
-    data["ak_gold"] = ak
-    data["fifteen_gold"] = fifteen
-    data["world_gold"] = world
-    data["usd"] = usd
-    data["thb"] = thb
-    data["updated_time"] = now_str
-    try:
-        with open(MARKET_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f)
-    except Exception as e:
-        print(f"Error saving market data: {e}")
-    return data
-
-def get_payment_info():
-    default_info = {
-        "kpay_no": "09xxxxxxxxx",
-        "kpay_name": "Admin Name",
-        "wave_no": "09xxxxxxxxx",
-        "wave_name": "Admin Name",
-        "min_deposit": "1,000 ကျပ်",
-        "min_withdraw": "3,000 ကျပ်"
-    }
-    if not os.path.exists(PAYMENT_FILE):
-        return default_info
-    try:
-        with open(PAYMENT_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return default_info
-
-# ==========================================
-# 4. 2D LIVE API DATA
-# ==========================================
-def fetch_2d_results():
-    url = "https://api.thaistock2d.com/live"
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=5) as response:
-            if response.status == 200:
-                return json.loads(response.read().decode('utf-8'))
-    except Exception as e:
-        print(f"Error fetching 2D API: {e}")
+        print(f"2D Fetch error: {e}")
     return None
 
-def format_results_message():
+def fetch_3d_data():
+    """3D ထွက်ဂဏန်း အချက်အလက်များကို ဆွဲယူခြင်း"""
+    try:
+        res = requests.get("https://api.thaistock2d.com/3d_result", headers=HEADERS, timeout=6)
+        if res.status_code == 200:
+            data = res.json()
+            if isinstance(data, list) and len(data) > 0:
+                return data[0]
+    except Exception as e:
+        print(f"3D Fetch error: {e}")
+    return None
+
+def format_2d_message():
     tz_mm = timezone(timedelta(hours=6, minutes=30))
     now = datetime.now(tz_mm)
-    today_str = now.strftime("%d-%m-%Y")
-    data = fetch_2d_results()
+    date_str = now.strftime("%d-%m-%Y")
 
-    time_map = {
-        "11:00:00": "မနက် ၁၁:၀၀",
-        "12:01:00": "နေ့လယ် ၁၂:၀၁",
-        "15:00:00": "ညနေ ၀၃:၀၀",
-        "16:30:00": "ညနေ ၀၄:၃၀"
+    data = fetch_2d_data()
+    live = data.get("live", {}) if data else {}
+    results = data.get("result", []) if data else []
+    history_date = data.get("history_date") if data else None
+
+    set_val = live.get("set", "0.00")
+    val_val = live.get("value", "0.00")
+    twod_val = live.get("twod", "--")
+    time_val = live.get("time", now.strftime("%Y-%m-%d %H:%M:%S"))
+
+    is_closed = (set_val in ["0.00", "0", "-", None])
+
+    time_slots = {
+        "11:00": "မနက် ၁၁:၀၀ (11:00 AM)",
+        "12:01": "နေ့လယ် ၁၂:၀၁ (12:01 PM)",
+        "15:00": "ညနေ ၀၃:၀၀ (03:00 PM)",
+        "16:30": "ညနေ ၀၄:၃၀ (04:30 PM)"
     }
 
-    if not data or "live" not in data:
-        return (
-            f"🏆 <b>ယနေ့ 2D/3D ထွက်ဂဏန်းများ ({today_str})</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "⚠️ လက်ရှိတွင် Live Data မရရှိနိုင်သေးပါ (ပိတ်ရက် သို့မဟုတ် ဈေးကွက်ဖွင့်ချိန် မရောက်သေးပါ)။\n\n"
-            "⏰ <b>2D ထွက်ရှိချိန်များ:</b>\n"
-            "▫️ မနက် ၁၁:၀၀\n"
-            "▫️ နေ့လယ် ၁၂:၀၁\n"
-            "▫️ ညနေ ၀၃:၀၀\n"
-            "▫️ ညနေ ၀၄:၃၀\n\n"
-            "🎯 <b>3D ထွက်ဂဏန်း:</b> လစဉ် ၁ ရက် နှင့် ၁၆ ရက်\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "💡 <i>Refresh ခလုတ်ကို နှိပ်၍ အသစ်ရယူနိုင်ပါသည်</i>"
-        )
+    found = {}
+    if results:
+        for r in results:
+            ot = r.get("open_time", "")[:5]
+            found[ot] = r
 
-    live = data.get("live", {})
-    results = data.get("result", [])
+    # နောက်ဆုံးထွက်ရှိခဲ့သော အမှန်တကယ် ပေါက်ဂဏန်းကို ရှာဖွေခြင်း (00 မဖြစ်စေရန်)
+    last_winning_num = None
+    for slot in ["16:30", "15:00", "12:01", "11:00"]:
+        r = found.get(slot)
+        if r and r.get("set") not in ["0.00", "0", "-", None]:
+            tw = str(r.get("twod", "")).strip()
+            if tw and tw not in ["00", "--", "-"]:
+                last_winning_num = tw
+                break
 
-    live_2d = live.get("twod", "--")
-    live_set = live.get("set", "--")
-    live_val = live.get("value", "--")
-    live_time = live.get("time", "")
+    if is_closed:
+        display_date = history_date if history_date else date_str
+        closing_num = last_winning_num if last_winning_num else (twod_val if twod_val not in ["00", "0", "--", ""] else "စောင့်ဆိုင်းဆဲ")
+        status_line = "🔴 *ဈေးကွက်ပိတ်ထားပါသည် (Market Closed / ตลาดปิด)*\n*(နောက်ဆုံးထွက်ရှိခဲ့သော တရားဝင် ရလဒ်များ ဖြစ်ပါသည်)*"
+        live_line = f"▫️ *နောက်ဆုံးပိတ်ဂဏန်း:* 【 *{closing_num}* 】"
+    else:
+        display_date = date_str
+        status_line = "🟢 *စတော့ဈေးကွက် တိုက်ရိုက် (Live / ผลสด)*"
+        live_line = f"🟢 *Live 2D:* 【 *{twod_val}* 】\n📈 *SET:* `{set_val}` | 💰 *Value:* `{val_val}`"
 
     msg = (
-        f"🏆 <b>မြန်မာ 2D/3D ယနေ့ ထွက်ဂဏန်းများ ({today_str})</b>\n"
+        f"📊 *မြန်မာ/ထိုင်း ၂လုံး (Thai Stock 2D) - {display_date}*\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        f"🟢 <b>Live 2D:</b> 【 <b>{live_2d}</b> 】\n"
-        f"📈 SET: <code>{live_set}</code> | 💰 Value: <code>{live_val}</code>\n"
-        f"🕒 အချိန်: <code>{live_time}</code>\n"
+        f"{status_line}\n"
+        f"{live_line}\n"
+        f"🕒 *အချိန်:* `{time_val}`\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "⏰ <b>ယနေ့ ထွက်ရှိပြီး ဂဏန်းများ:</b>\n\n"
+        "⏰ *ယနေ့ အလှည့်အလိုက် ထွက်ဂဏန်းများ:*\n\n"
     )
 
-    for r in results:
-        open_time = r.get("open_time", "")
-        label = time_map.get(open_time, open_time)
-        twod = r.get("twod", "--")
-        set_val = r.get("set", "--")
-        msg += f"▫️ <b>{label}:</b> 【 <b>{twod}</b> 】 (SET: {set_val})\n"
+    for slot, label in time_slots.items():
+        r = found.get(slot)
+        if r and r.get("set") not in ["0.00", "0", "-", None]:
+            r_twod = r.get("twod", "--")
+            r_set = r.get("set", "-")
+            msg += f"• *{label}:* 【 *{r_twod}* 】 `(SET: {r_set})`\n"
+        else:
+            msg += f"• *{label}:* `မထွက်ရှိသေးပါ (စောင့်ဆိုင်းဆဲ)`\n"
+
+    msg += "━━━━━━━━━━━━━━━━━━━━\n"
+
+    # 3D နောက်ဆုံးထွက်ဂဏန်း ဖော်ပြခြင်း
+    d3 = fetch_3d_data()
+    threed_val = None
+    threed_date = ""
+    if d3:
+        threed_val = d3.get("result") or d3.get("threed") or d3.get("3d")
+        threed_date = d3.get("date", "")
+
+    if threed_val and str(threed_val).strip() not in ["", "--", "000", "0", "None"]:
+        msg += f"🎯 *နောက်ဆုံးထွက် 3D ပေါက်ဂဏန်း:* 【 *{threed_val}* 】 `({threed_date})`\n\n"
+    else:
+        msg += "🎯 *3D ထွက်ဂဏန်း:* လစဉ် ၁ ရက် နှင့် ၁၆ ရက် (ညနေ ၃:၃၀)\n\n"
 
     msg += (
-        "\n━━━━━━━━━━━━━━━━━━━━\n"
-        "🎯 <b>3D ထွက်ဂဏန်း:</b> လစဉ် ၁ ရက် နှင့် ၁၆ ရက်\n\n"
-        "🔍 <b>ပေါက်ဂဏန်း အလိုအလျောက် တိုက်ရန်:</b>\n"
-        "မိမိထိုးထားသော ဂဏန်း ၂ လုံး (ဥပမာ - <code>45</code>) ကို စာရိုက်ပို့၍ တိုက်ဆိုင်စစ်ဆေးနိုင်ပါသည်ခင်ဗျာ!"
+        "🔍 *ပေါက်ဂဏန်း တိုက်ရန် (ตรวจหวย):*\n"
+        "မိမိထိုးထားသော ဂဏန်း ၂ လုံး (ဥပမာ - `45`) ကို စာရိုက်ပို့၍ တိုက်ဆိုင်စစ်ဆေးနိုင်ပါသည်ခင်ဗျာ!"
     )
     return msg
 
-def format_market_message():
-    tz_mm = timezone(timedelta(hours=6, minutes=30))
-    today_str = datetime.now(tz_mm).strftime("%d-%m-%Y")
-    data = get_market_data()
+# ==================== KEYBOARD MENUS ====================
 
-    msg = (
-        f"🪙 <b>ရွှေဈေးနှင့် ကမ္ဘာ့ငွေကြေး ပေါက်ဈေးများ ({today_str})</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "🥇 <b>မြန်မာ့ရွှေဈေး:</b>\n"
-        f"• အခေါက်ရွှေ (၁၆ ပဲရည်): <code>{data.get('ak_gold')}</code>\n"
-        f"• ၁၅ ပဲရည် ရွှေဈေး: <code>{data.get('fifteen_gold')}</code>\n\n"
-        "🌍 <b>ကမ္ဘာ့ရွှေဈေး:</b>\n"
-        f"• World Gold (Spot): <code>{data.get('world_gold')}</code>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "💵 <b>နိုင်ငံခြားငွေလဲနှုန်း (Foreign Exchange):</b>\n"
-        f"• အမေရိကန်ဒေါ်လာ (USD): <code>{data.get('usd')}</code>\n"
-        f"• ထိုင်းဘတ် (THB): <code>{data.get('thb')}</code>\n"
-        f"• စင်ကာပူဒေါ်လာ (SGD): <code>{data.get('sgd')}</code>\n"
-        f"• မလေးရှားရင်းဂစ် (MYR): <code>{data.get('myr')}</code>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"🕒 <i>နောက်ဆုံး အပ်ဒိတ်: {data.get('updated_time')}</i>\n\n"
-        "💡 <i>ဈေးကွက် အတက်အကျအလိုက် အချိန်နှင့်တပြေးညီ ပြောင်းလဲနိုင်ပါသည်ခင်ဗျာ။</i>"
-    )
-    return msg
-
-# ==========================================
-# 5. KEYBOARD MENUS
-# ==========================================
-def get_main_menu(is_admin=False):
+def get_main_menu():
     keyboard = [
-        [KeyboardButton("💰 ငွေသွင်း/ငွေထုတ်"), KeyboardButton("💵 ငွေလက်ကျန်/ID")],
-        [KeyboardButton("🎯 2D ထိုး"), KeyboardButton("🎯 3D ထိုး")],
-        [KeyboardButton("🏆 ထီပေါက်စဉ်/တိုက်ရန်"), KeyboardButton("🪙 ရွှေဈေး/ငွေဈေး")],
-        [KeyboardButton("🎮 Game ကဏ္ဍ"), KeyboardButton("📜 ထိုးမှတ်တမ်း")],
-        [KeyboardButton("👩‍💻 Admin Account"), KeyboardButton("🏠 Home")]
+        [KeyboardButton("🟢 ၂လုံး Live & ထွက်ဂဏန်း"), KeyboardButton("🏆 ထီပေါက်စဉ်/တိုက်ရန်")],
+        [KeyboardButton("🎯 2D ထိုး (แทง 2D)"), KeyboardButton("🎯 3D ထိုး (แทง 3D)")],
+        [KeyboardButton("💰 ငွေသွင်း/ငွေထုတ် (ฝาก-ถอน)"), KeyboardButton("💵 ငွေလက်ကျန် (ยอดเงิน)")],
+        [KeyboardButton("📜 ထိုးထားသော စာရင်းများ"), KeyboardButton("👩💻 Admin Account")],
+        [KeyboardButton("🏠 Home")]
     ]
-    if is_admin:
-        keyboard.append([KeyboardButton("📢 Admin Broadcast")])
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-# ==========================================
-# 6. BOT COMMAND HANDLERS
-# ==========================================
+# ==================== TELEGRAM HANDLERS ====================
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message:
-        user = update.effective_user
-        add_user(user.id)
-        is_admin = (user.username or "").lower() == ADMIN_USERNAME.lower()
-        await update.message.reply_text(
-            f"✨ <b>မြန်မာ 2D/3D & Game စနစ်မှ ကြိုဆိုပါသည်</b> ✨\n\n"
-            f"👤 အကောင့်: <b>{user.first_name}</b>\n"
-            f"🆔 သင်၏ User ID: <code>{user.id}</code>\n\n"
-            "၂လုံး၊ ၃လုံး ထီပေါက်စဉ်များ၊ ရွှေဈေး/ငွေဈေးများနှင့် ဂိမ်းများကို အချိန်နှင့်တပြေးညီ ကြည့်ရှုနိုင်ပါသည်ခင်ဗျာ။\n\n"
-            "မိမိ ပြုလုပ်လိုသည်ကို အောက်ပါ ခလုတ်များမှ ရွေးချယ်ပါ -",
-            parse_mode="HTML",
-            reply_markup=get_main_menu(is_admin)
-        )
+    welcome_text = (
+        "✨ *မြန်မာ/ထိုင်း 2D & 3D စနစ်မှ ကြိုဆိုပါသည်* ✨\n"
+        "ยินดีต้อนรับสู่ระบบหวย 2D/3D พม่า-ไทย 🙏\n\n"
+        "🇲🇲 *မြန်မာကျပ်ငွေ (MMK)* ဖြင့်ဖြစ်စေ\n"
+        "🇹🇭 *ထိုင်းဘတ်ငွေ (THB / บาท)* ဖြင့်ဖြစ်စေ\n"
+        "အဆင်ပြေ လွယ်ကူစွာ တိုက်ရိုက် ထိုးနိုင်ပါသည်ခင်ဗျာ!\n\n"
+        "အောက်ပါ Menu ခလုတ်များမှ ရွေးချယ်နိုင်ပါသည် 👇"
+    )
+    await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=get_main_menu())
 
 def is_2d_open():
     tz_mm = timezone(timedelta(hours=6, minutes=30))
     now = datetime.now(tz_mm)
     if now.weekday() in [5, 6]:
-        return False, "📅 ယနေ့သည် 2D ပိတ်ရက် ဖြစ်ပါသဖြင့် အသုံးပြု၍မရနိုင်ပါ ❌"
+        return False, "📅 ယနေ့သည် 2D ပိတ်ရက် (စနေ/တနင်္ဂနွေ) ဖြစ်ပါသဖြင့် အသုံးပြု၍မရနိုင်ပါ ❌\n(วันนี้ตลาดปิด เสาร์-อาทิตย์)"
     return True, "ဖွင့်လှစ်ထားပါသည်"
 
-# ဂဏန်း ပေါက်/မပေါက် တိုက်ပေးခြင်း
-async def check_winning_number(update: Update, number_str: str):
-    data = fetch_2d_results()
-    if not data or "result" not in data:
-        await update.message.reply_text(
-            f"🎯 <b>ဂဏန်း 【 {number_str} 】 အား စစ်ဆေးချက်:</b>\n\n"
-            "⚠️ ယနေ့အတွက် Live Data မရရှိသေးပါ (သို့မဟုတ်) ဈေးကွက်ပိတ်ချိန် ဖြစ်ပါသည်ခင်ဗျာ။",
-            parse_mode="HTML"
-        )
-        return
-
-    results = data.get("result", [])
-    found_matches = []
-    time_map = {
-        "11:00:00": "မနက် ၁၁:၀၀",
-        "12:01:00": "နေ့လယ် ၁၂:၀၁",
-        "15:00:00": "ညနေ ၀၃:၀၀",
-        "16:30:00": "ညနေ ၀၄:၃၀"
-    }
-
-    for r in results:
-        open_time = r.get("open_time", "")
-        label = time_map.get(open_time, open_time)
-        twod = r.get("twod", "")
-        if twod == number_str:
-            found_matches.append(label)
-
-    if found_matches:
-        matches_str = "၊ ".join(found_matches)
-        await update.message.reply_text(
-            f"🎉 <b>ဂုဏ်ယူပါသည်! ပေါက်ပါသည်!</b> 🎉\n\n"
-            f"🎯 ထိုးဂဏန်း: 【 <b>{number_str}</b> 】\n"
-            f"🏆 ပေါက်သောအချိန်: <b>{matches_str}</b>\n\n"
-            "💰 အနိုင်ငွေ ထုတ်ယူရန် Admin ထံ ချက်ချင်း ဆက်သွယ်လိုက်ပါခင်ဗျာ!",
-            parse_mode="HTML"
-        )
-    else:
-        await update.message.reply_text(
-            f"🎯 <b>ဂဏန်း 【 {number_str} 】 အား စစ်ဆေးချက်:</b>\n\n"
-            "❌ ယနေ့ထွက်ရှိထားသော ပေါက်ဂဏန်းများနှင့် မတိုက်ဆိုင်သေးပါခင်ဗျာ။\n"
-            "နောက်ပွဲများတွင် ကံကောင်းပါစေခင်ဗျာ! 🍀",
-            parse_mode="HTML"
-        )
-
-# ထိုးပြေစာ ဘောင်ချာ ထုတ်ပေးသည့် Function (Ticket Generator)
-async def process_bet_ticket(update: Update, text: str):
-    user = update.effective_user
-    tz_mm = timezone(timedelta(hours=6, minutes=30))
-    now = datetime.now(tz_mm)
-
-    parts = text.split("=")
-    num_part = parts[0].strip().upper()
-    amount_part = parts[1].strip()
-
-    is_3d = len(num_part.rstrip('R')) == 3
-    bet_type = "3D" if is_3d else "2D"
-    date_str = now.strftime("%d-%m-%Y %I:%M %p")
-    ticket_id = f"{bet_type}{now.strftime('%d%m')}-{random.randint(1000, 9999)}"
-
-    bet_data = {
-        "ticket_id": ticket_id,
-        "type": bet_type,
-        "number": num_part,
-        "amount": amount_part,
-        "date": date_str
-    }
-    save_bet(user.id, bet_data)
-
-    voucher_text = (
-        f"🧾 <b>{bet_type} တရားဝင် ထိုးပြေစာ (Voucher)</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"🆔 <b>ပြေစာ ID:</b> <code>#{ticket_id}</code>\n"
-        f"👤 <b>User ID:</b> <code>{user.id}</code>\n"
-        f"📅 <b>နေ့စွဲ/အချိန်:</b> <code>{date_str}</code>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        f"🎯 <b>ထိုးဂဏန်း:</b> 【 <b>{num_part}</b> 】\n"
-        f"💰 <b>ထိုးငွေ:</b> <b>{amount_part} ကျပ်</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "✅ <b>စာရင်း အောင်မြင်စွာ မှတ်သားပြီးပါပြီ!</b>\n"
-        "💡 <i>အငြင်းပွားမှုမရှိစေရန် ပြေစာနံပါတ်ကို သိမ်းထားပါခင်ဗျာ။</i>"
-    )
-    inline_kb = InlineKeyboardMarkup([
-        [InlineKeyboardButton("💬 Telegram ဖြင့် တိုက်ရိုက် ဆက်သွယ်ရန်", url=f"https://t.me/{ADMIN_USERNAME}")]
-    ])
-    await update.message.reply_text(voucher_text, parse_mode="HTML", reply_markup=inline_kb)
-
-# ==========================================
-# 7. MAIN BUTTONS HANDLER
-# ==========================================
 async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or not update.message.text:
-        return
     text = update.message.text.strip()
     user = update.effective_user
-    add_user(user.id)
-    is_admin = (user.username or "").lower() == ADMIN_USERNAME.lower()
+    user_id = user.id if user else 0
 
-    # 1. ဂဏန်းထိုးခြင်း (45=500 သို့မဟုတ် 789=1000 ပါပါက တိုက်ရိုက် ထိုးပြေစာ ဘောင်ချာ ထုတ်ပေးခြင်း)
-    if "=" in text:
-        parts = text.split("=")
-        if len(parts) == 2 and parts[1].strip().isdigit():
-            await process_bet_ticket(update, text)
-            return
+    # ၂လုံး Live & ထွက်ဂဏန်း / ထီပေါက်စဉ် တိုက်ရန်
+    if text in ["🟢 ၂လုံး Live & ထွက်ဂဏန်း", "🏆 ထီပေါက်စဉ်/တိုက်ရန်", "🏆 ထီပေါက်စဉ်"]:
+        msg = format_2d_message()
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("🔄 Refresh အသစ်ရယူရန်", callback_data="refresh_2d")]])
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=kb)
 
-    # 2. ဂဏန်း ၂ လုံး ရိုက်ပို့ပါက အလိုအလျောက် ပေါက်ဂဏန်း တိုက်ပေးခြင်း
-    if text.isdigit() and len(text) in [2, 3]:
-        await check_winning_number(update, text)
-        return
-
-    # 3. 2D ထိုး
-    if "2D ထိုး" in text:
+    # 2D ထိုးခြင်း လမ်းညွှန်ချက် (မြန်မာကျပ် & ထိုင်းဘတ်)
+    elif text in ["🎯 2D ထိုး (แทง 2D)", "🎯 2D ထိုး"]:
         is_open, msg = is_2d_open()
         if not is_open:
             await update.message.reply_text(msg)
         else:
-            await update.message.reply_text(
-                "🎯 <b>2D ထိုးရန် Format:</b>\n"
-                "<code>ဂဏန်း=ငွေပမာဏ</code>\n\n"
-                "💡 ဥပမာ စာရိုက်ပို့ပါ -\n"
-                "• <code>45=500</code> (၄၅ ကို ၅၀၀ ကျပ်)\n"
-                "• <code>45R=500</code> (၄၅ အာ ၅၀၀ ကျပ်)\n\n"
-                "📌 အလျော်အစား: ၈၅ ဆ / ၉၀ ဆ\n"
-                "ရိုက်ပို့လိုက်သည်နှင့် <b>တရားဝင် ထိုးပြေစာ (Voucher ID)</b> အလိုအလျောက် ထွက်လာပါမည်!",
-                parse_mode="HTML"
-            )
-
-    # 4. 3D ထိုး
-    elif "3D ထိုး" in text:
-        await update.message.reply_text(
-            "🎯 <b>3D ထိုးရန် Format:</b>\n"
-            "<code>ဂဏန်း=ငွေပမာဏ</code>\n\n"
-            "💡 ဥပမာ စာရိုက်ပို့ပါ -\n"
-            "• <code>789=1000</code> (၇၈၉ ကို ၁၀၀၀ ကျပ်)\n"
-            "• <code>789R=1000</code> (၇၈၉ အာ ၁၀၀၀ ကျပ်)\n\n"
-            "📌 အလျော်အစား: တိုက်ရိုက် ၇၀၀ ဆ / ပတ်လည် ၁၀ ဆ\n"
-            "📌 ထွက်မည့်ရက်: လစဉ် ၁ ရက် နှင့် ၁၆ ရက်\n"
-            "ရိုက်ပို့လိုက်သည်နှင့် <b>တရားဝင် ထိုးပြေစာ (Voucher ID)</b> အလိုအလျောက် ထွက်လာပါမည်!",
-            parse_mode="HTML"
-        )
-
-    # 5. ထီပေါက်စဉ် / တိုက်ရန်
-    elif "ထီပေါက်စဉ်" in text:
-        res_msg = format_results_message()
-        inline_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Refresh အသစ်ရယူရန်", callback_data="refresh_results")]
-        ])
-        await update.message.reply_text(res_msg, parse_mode="HTML", reply_markup=inline_kb)
-
-    # 6. ရွှေဈေး / ငွေဈေး
-    elif "ရွှေဈေး" in text or "ငွေဈေး" in text:
-        market_msg = format_market_message()
-        inline_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Refresh ဈေးနှုန်းအသစ်ရယူရန်", callback_data="refresh_market")]
-        ])
-        await update.message.reply_text(market_msg, parse_mode="HTML", reply_markup=inline_kb)
-
-    # 7. ငွေသွင်း / ငွေထုတ်
-    elif "ငွေသွင်း" in text or "ငွေထုတ်" in text:
-        pay = get_payment_info()
-        inline_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("💬 Telegram ဖြင့် တိုက်ရိုက် ဆက်သွယ်ရန်", url=f"https://t.me/{ADMIN_USERNAME}")]
-        ])
-        msg = (
-            "💳 <b>ငွေသွင်း / ငွေထုတ် အချက်အလက်များ</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            f"👤 <b>သင့် User ID:</b> <code>{user.id}</code>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "📥 <b>ငွေသွင်းရန် အကောင့်များ:</b>\n"
-            f"📱 <b>KBZPay:</b> <code>{pay.get('kpay_no')}</code> ({pay.get('kpay_name')})\n"
-            f"📱 <b>WavePay:</b> <code>{pay.get('wave_no')}</code> ({pay.get('wave_name')})\n\n"
-            f"💵 အနည်းဆုံး ငွေသွင်း: {pay.get('min_deposit')}\n"
-            f"💵 အနည်းဆုံး ငွေထုတ်: {pay.get('min_withdraw')}\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            f"💡 <b>ငွေလွှဲမှတ်ချက် (Note):</b> တွင် မိမိ User ID <code>{user.id}</code> ထည့်သွင်းပေးပါခင်ဗျာ။\n"
-            "ငွေလွှဲပြေစာ ပုံကို Bot ထဲ ပို့လိုက်သည်နှင့် အကောင့်ထဲ ငွေချက်ချင်း ဖြည့်ပေးပါမည်!"
-        )
-        await update.message.reply_text(msg, parse_mode="HTML", reply_markup=inline_kb)
-
-    # 8. ငွေလက်ကျန် / ID
-    elif "ငွေလက်ကျန်" in text or "ID" in text:
-        tz_mm = timezone(timedelta(hours=6, minutes=30))
-        today_str = datetime.now(tz_mm).strftime("%d-%m-%Y")
-        msg = (
-            "💵 <b>သင့်အကောင့် အချက်အလက်</b>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            f"👤 <b>အမည်:</b> {user.first_name}\n"
-            f"🆔 <b>သင့် User ID:</b> <code>{user.id}</code>\n"
-            f"💰 <b>လက်ကျန်ငွေ:</b> 0 ကျပ်\n"
-            f"📅 <b>နေ့စွဲ:</b> <code>{today_str}</code>\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "ငွေဖြည့်လိုပါက '💰 ငွေသွင်း/ငွေထုတ်' ခလုတ်ကို နှိပ်ပါခင်ဗျာ။"
-        )
-        await update.message.reply_text(msg, parse_mode="HTML")
-
-    # 9. ထိုးမှတ်တမ်း (ဘောင်ချာများ ပြန်ကြည့်ခြင်း)
-    elif "မှတ်တမ်း" in text:
-        user_bets = get_user_bets(user.id)
-        if not user_bets:
-            await update.message.reply_text(
-                f"📜 <b>ထိုးခဲ့သော မှတ်တမ်းများ</b>\n"
-                f"🆔 User ID: <code>{user.id}</code>\n"
+            bet_info = (
+                "🎯 *2D ထိုးရန် ပုံစံများ (รูปแบบการแทง 2D)*:\n"
                 "━━━━━━━━━━━━━━━━━━━━\n"
-                "ယခုပွဲအတွက် ထိုးထားသော စာရင်းများ မရှိသေးပါခင်ဗျာ။",
-                parse_mode="HTML"
+                "🇲🇲 *မြန်မာကျပ်ငွေ (MMK) ဖြင့် ထိုးရန်:*\n"
+                "👉 `ဂဏန်း=ကျပ်ငွေ`\n"
+                "ဥပမာ - `45=500` (သို့မဟုတ်) `12=1000`\n"
+                "💰 အလျော်အစား: ၁ ကျပ်လျှင် ၈၅ ကျပ် (1:85)\n\n"
+                "🇹🇭 *ထိုင်းဘတ်ငွေ (THB / บาท) ဖြင့် ထိုးရန်:*\n"
+                "👉 `ဂဏန်း=ဘတ်B`\n"
+                "ဥပမာ - `45=20B` (သို့မဟုတ်) `45=20ဘတ်` (သို့မဟုတ်) `45=20บาท`\n"
+                "💰 အလျော်အစား: ၁ ဘတ်လျှင် ၉၀ ဘတ် (จ่าย 1:90 บาท)\n\n"
+                "━━━━━━━━━━━━━━━━━━━━\n"
+                "✍️ ထိုးလိုသော ဂဏန်းများကို အထက်ပါအတိုင်း စာရိုက်ပို့ပေးရုံဖြင့် Bot မှ အလိုအလျောက် မှတ်တမ်းတင်ပေးပါမည်ခင်ဗျာ!"
+            )
+            await update.message.reply_text(bet_info, parse_mode="Markdown")
+
+    # 3D ထိုးခြင်း လမ်းညွှန်ချက် (မြန်မာကျပ် & ထိုင်းဘတ်)
+    elif text in ["🎯 3D ထိုး (แทง 3D)", "🎯 3D ထိုး"]:
+        bet_3d_info = (
+            "🎯 *3D ထိုးရန် ပုံစံများ (รูปแบบการแทง 3D)*:\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "🇲🇲 *မြန်မာကျပ်ငွေဖြင့် ထိုးရန်:*\n"
+            "👉 `ဂဏန်း=ကျပ်ငွေ`\n"
+            "ဥပမာ - `789=1000`\n"
+            "💰 အလျော်အစား: ၁ ကျပ်လျှင် ၇၀၀ ကျပ် (1:700)\n\n"
+            "🇹🇭 *ထိုင်းဘတ်ငွေဖြင့် ထိုးရန် (บาท):*\n"
+            "👉 `ဂဏန်း=ဘတ်B`\n"
+            "ဥပမာ - `789=50B` (သို့မဟုတ်) `789=50ဘတ်` (သို့မဟုတ်) `789=50บาท`\n"
+            "💰 အလျော်အစား: ၁ ဘတ်လျှင် ၉၀၀ ဘတ် (จ่าย 1:900 บาท)\n\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "✍️ ထိုးလိုသော ဂဏန်းများကို စာရိုက်ပို့ပေးပါခင်ဗျာ!"
+        )
+        await update.message.reply_text(bet_3d_info, parse_mode="Markdown")
+
+    # ငွေသွင်း/ငွေထုတ် (မြန်မာ & ထိုင်း ဘဏ်များ အပြည့်အစုံ)
+    elif text in ["💰 ငွေသွင်း/ငွေထုတ် (ฝาก-ถอน)", "💰 ငွေသွင်း/ငွေထုတ်"]:
+        deposit_text = (
+            "💰 *ငွေသွင်း / ငွေထုတ် ပြုလုပ်နည်း (ฝาก - ถอนเงิน)*\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "🇲🇲 *မြန်မာနိုင်ငံမှ ငွေပေးချေမှုစနစ်များ:*\n"
+            "• KPay (KBZPay)\n"
+            "• WavePay\n"
+            "• CB Pay, AYA Pay\n\n"
+            "🇹🇭 *ထိုင်းနိုင်ငံမှ ငွေပေးချေမှုစနစ်များ (ช่องทางโอนเงินไทย):*\n"
+            "• KBank (Kasikornbank / ธนาคารกสิกรไทย)\n"
+            "• SCB (Siam Commercial Bank / ไทยพาณิชย์)\n"
+            "• PromptPay (พร้อมเพย์ QR)\n"
+            "• TrueMoney Wallet (ทรูมันนี่ วอลเล็ท)\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "💱 *ငွေလဲနှုန်း:* ပြင်ပပေါက်ဈေးအတိုင်း တိကျမှန်ကန်စွာ တွက်ချက်လက်ခံပေးပါသည်ခင်ဗျာ။\n\n"
+            "👉 ငွေသွင်းရန် အကောင့်နံပါတ် သို့မဟုတ် ငွေထုတ်ယူလိုပါက Admin ထံ တိုက်ရိုက် ဆက်သွယ်ပါခင်ဗျာ!"
+        )
+        inline_kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💬 Admin ထံ တိုက်ရိုက် ငွေသွင်း/ငွေထုတ်ရန်", url=f"https://t.me/{ADMIN_USERNAME}")]
+        ])
+        await update.message.reply_text(deposit_text, parse_mode="Markdown", reply_markup=inline_kb)
+
+    # ငွေလက်ကျန် (MMK & THB နှစ်မျိုးလုံး ဖော်ပြသည်)
+    elif text in ["💵 ငွေလက်ကျန် (ยอดเงิน)", "💵 ငွေလက်ကျန်"]:
+        bal = user_balances.get(user_id, {"mmk": 0, "thb": 0})
+        balance_text = (
+            "💵 *သင့် လက်ကျန်ငွေစာရင်း (ยอดเงินคงเหลือ)*:\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 *အသုံးပြုသူ ID:* `{user_id}`\n\n"
+            f"🇲🇲 *မြန်မာကျပ်ငွေ:* `{bal.get('mmk', 0):,} MMK (ကျပ်)`\n"
+            f"🇹🇭 *ထိုင်းဘတ်ငွေ:* `{bal.get('thb', 0):,} THB (บาท)`\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "💡 *ငွေဖြည့်သွင်းလိုပါက:*\n"
+            "KPay, WavePay သို့မဟုတ် Thai Bank, PromptPay တို့ဖြင့် ငွေလွှဲပြီး Admin ထံ ဆက်သွယ်၍ လက်ကျန်ငွေ ဖြည့်သွင်းနိုင်ပါသည်ခင်ဗျာ။"
+        )
+        inline_kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💬 Admin ထံ လက်ကျန်ငွေဖြည့်ရန်", url=f"https://t.me/{ADMIN_USERNAME}")]
+        ])
+        await update.message.reply_text(balance_text, parse_mode="Markdown", reply_markup=inline_kb)
+
+    # Admin Account ခလုတ်
+    elif text == "👩💻 Admin Account":
+        inline_kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💬 Telegram ဖြင့် တိုက်ရိုက် စကားပြောရန်", url=f"https://t.me/{ADMIN_USERNAME}")],
+            [InlineKeyboardButton("📧 Email တိုက်ရိုက် ပို့ရန်", url=f"mailto:{ADMIN_EMAIL}")]
+        ])
+        msg = (
+            "👇 *Admin နှင့် တိုက်ရိုက် ဆက်သွယ်ရန် (ติดต่อแอดมิน)* 👇\n\n"
+            f"👤 *Admin Telegram:* @{ADMIN_USERNAME}\n"
+            f"📧 *Admin Email:* `{ADMIN_EMAIL}`\n\n"
+            "🇲🇲 မြန်မာစကား နှင့် 🇹🇭 ภาษาไทย နှစ်မျိုးလုံးဖြင့် နွေးထွေးစွာ ဆက်သွယ်မေးမြန်းနိုင်ပါသည်ခင်ဗျာ။"
+        )
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=inline_kb)
+
+    # ထိုးထားသော စာရင်းများ
+    elif text in ["📜 ထိုးထားသော စာရင်းများ", "📜 ထိုးခဲ့သော မှတ်တမ်းများ"]:
+        bets = user_bets.get(user_id, [])
+        if not bets:
+            await update.message.reply_text(
+                "📜 *ယခုပွဲအတွက် ထိုးထားသော စာရင်းများ မရှိသေးပါခင်ဗျာ။*\n"
+                "(ยังไม่มีรายการแทงในระบบ)\n\n"
+                "ထိုးလိုပါက `45=500` (ကျပ်) သို့မဟုတ် `45=20B` (ဘတ်) ဟု စာရိုက်ပို့နိုင်ပါသည်!"
             )
         else:
-            msg = (
-                f"📜 <b>သင်၏ ထိုးပြေစာ မှတ်တမ်းများ ({len(user_bets)} စောင်)</b>\n"
-                f"🆔 User ID: <code>{user.id}</code>\n"
+            tz_mm = timezone(timedelta(hours=6, minutes=30))
+            now_str = datetime.now(tz_mm).strftime("%d-%m-%Y")
+
+            mmk_lines = []
+            thb_lines = []
+            total_mmk = 0
+            total_thb = 0
+
+            for b in bets:
+                if b["currency"] == "THB":
+                    thb_lines.append(f"• {b['type']} 【 `{b['number']}` 】 = `{b['amount']} ဘတ်` (ပေါက်: `{b['payout']:,} THB`)")
+                    total_thb += b["amount"]
+                else:
+                    mmk_lines.append(f"• {b['type']} 【 `{b['number']}` 】 = `{b['amount']:,} ကျပ်` (ပေါက်: `{b['payout']:,} Ks`)")
+                    total_mmk += b["amount"]
+
+            history_msg = (
+                f"📜 *သင် ထိုးထားသော စာရင်းများ (ประวัติการแทงของคุณ)*\n"
+                f"📅 *ရက်စွဲ:* `{now_str}`\n"
                 "━━━━━━━━━━━━━━━━━━━━\n"
             )
-            for b in user_bets[-5:]:
-                msg += (
-                    f"▫️ <b>#{b.get('ticket_id')}</b> ({b.get('date')})\n"
-                    f"   ဂဏန်း: 【 <b>{b.get('number')}</b> 】 | ငွေ: <b>{b.get('amount')} ကျပ်</b>\n"
+
+            if mmk_lines:
+                history_msg += "🇲🇲 *မြန်မာကျပ်ငွေ ထိုးစာရင်းများ:*\n" + "\n".join(mmk_lines) + f"\n👉 စုစုပေါင်း MMK: `{total_mmk:,} ကျပ်`\n\n"
+            if thb_lines:
+                history_msg += "🇹🇭 *ထိုင်းဘတ်ငွေ ထိုးစာရင်းများ (บาท):*\n" + "\n".join(thb_lines) + f"\n👉 စုစုပေါင်း THB: `{total_thb:,} ဘတ်`\n\n"
+
+            history_msg += "━━━━━━━━━━━━━━━━━━━━\nဆုကြေးငွေ ထုတ်ယူရန် Admin ထံ ဆက်သွယ်ပါခင်ဗျာ!"
+            inline_kb = InlineKeyboardMarkup([
+                [InlineKeyboardButton("💬 Admin ထံ စာရင်းအတည်ပြုရန်", url=f"https://t.me/{ADMIN_USERNAME}")]
+            ])
+            await update.message.reply_text(history_msg, parse_mode="Markdown", reply_markup=inline_kb)
+
+    elif text == "🏠 Home":
+        await update.message.reply_text("🏠 ပင်မစာမျက်နှာသို့ ပြန်လည်ရောက်ရှိပါပြီခင်ဗျာ။", reply_markup=get_main_menu())
+
+    # User က ထီထိုးသည့် Format စာရိုက်ပို့ခြင်း (ဥပမာ - 45=500 သို့မဟုတ် 45=20B သို့မဟုတ် 789=50ဘတ်)
+    elif "=" in text:
+        bet_pattern = re.compile(r'(\d{2,3})\s*=\s*(\d+)\s*([a-zA-Z\u1000-\u109F\u0E00-\u0E7F]*)')
+        matches = bet_pattern.findall(text)
+
+        if matches:
+            tz_mm = timezone(timedelta(hours=6, minutes=30))
+            now_str = datetime.now(tz_mm).strftime("%d-%m-%Y %I:%M %p")
+
+            recorded_list = []
+            sub_total_mmk = 0
+            sub_total_thb = 0
+
+            for num, amt_str, curr_str in matches:
+                amt = int(amt_str)
+                curr_clean = curr_str.lower().strip()
+                # ထိုင်းဘတ် အခေါ်အဝေါ်များ စစ်ဆေးခြင်း
+                is_thb = curr_clean in ['b', 'baht', 'thb', 'ဘတ်', 'บาท', 'บ']
+
+                if len(num) == 2:
+                    gtype = "2D"
+                    if is_thb:
+                        curr = "THB"
+                        unit = "ဘတ်"
+                        payout = amt * 90
+                        sub_total_thb += amt
+                    else:
+                        curr = "MMK"
+                        unit = "ကျပ်"
+                        payout = amt * 85
+                        sub_total_mmk += amt
+                elif len(num) == 3:
+                    gtype = "3D"
+                    if is_thb:
+                        curr = "THB"
+                        unit = "ဘတ်"
+                        payout = amt * 900
+                        sub_total_thb += amt
+                    else:
+                        curr = "MMK"
+                        unit = "ကျပ်"
+                        payout = amt * 700
+                        sub_total_mmk += amt
+                else:
+                    continue
+
+                record = {
+                    "type": gtype,
+                    "number": num,
+                    "amount": amt,
+                    "currency": curr,
+                    "unit": unit,
+                    "payout": payout,
+                    "time": now_str
+                }
+                user_bets.setdefault(user_id, []).append(record)
+                recorded_list.append(record)
+
+            if recorded_list:
+                confirm_msg = (
+                    "✅ *ထီထိုးသွင်းမှု အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ*\n"
+                    "🎉 *บันทึกการแทงสำเร็จเรียบร้อยแล้ว!*\n"
+                    "━━━━━━━━━━━━━━━━━━━━\n"
                 )
-            msg += "━━━━━━━━━━━━━━━━━━━━\n💡 <i>အထက်ပါ စာရင်းများသည် တရားဝင် ထိုးပြေစာများ ဖြစ်ပါသည်</i>"
-            await update.message.reply_text(msg, parse_mode="HTML")
+                for r in recorded_list:
+                    rate_str = "1:90" if (r["currency"] == "THB" and r["type"] == "2D") else ("1:900" if r["currency"] == "THB" else ("1:85" if r["type"] == "2D" else "1:700"))
+                    confirm_msg += f"• *{r['type']}:* 【 `{r['number']}` 】 ➔ `{r['amount']:,} {r['unit']}` (ဆုကြေး: `{r['payout']:,} {r['unit']}` [{rate_str}])\n"
 
-    # 10. Game ကဏ္ဍ
-    elif "Game" in text or "ဂိမ်း" in text:
-        inline_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("💬 Telegram ဖြင့် တိုက်ရိုက် ဆက်သွယ်ရန်", url=f"https://t.me/{ADMIN_USERNAME}")]
-        ])
-        msg = (
-            "🎮 <b>လူကြိုက်များသော ဂိမ်းကဏ္ဍများ</b> 🎮\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "🔥 <b>ဆော့ကစားနိုင်သော ဂိမ်းများ:</b>\n"
-            "• JDB / JILI / CQ9 စလော့ဂိမ်းများ\n"
-            "• ရှမ်းကိုးမီး၊ ဘူကြီး၊ ရွှေရှမ်း ဖဲဂိမ်းများ\n"
-            "• တိုက်ရိုက် ကာစီနို (Live Casino) & ငါးပစ်ဂိမ်းများ\n"
-            "• အလျော်အစား ၁၀၀% တိကျမှန်ကန်မှု\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "ဂိမ်းအကောင့် အခမဲ့ဖွင့်ရန် Telegram မှတစ်ဆင့် တိုက်ရိုက် ဆက်သွယ်နိုင်ပါသည်ခင်ဗျာ -"
-        )
-        await update.message.reply_text(msg, parse_mode="HTML", reply_markup=inline_kb)
+                confirm_msg += "━━━━━━━━━━━━━━━━━━━━\n"
+                if sub_total_mmk > 0:
+                    confirm_msg += f"🇲🇲 စုစုပေါင်း မြန်မာကျပ်: `{sub_total_mmk:,} ကျပ်`\n"
+                if sub_total_thb > 0:
+                    confirm_msg += f"🇹🇭 စုစုပေါင်း ထိုင်းဘတ်: `{sub_total_thb:,} ဘတ်`\n"
 
-    # 11. Admin Account (TELEGRAM ONLY)
-    elif "Admin" in text or "admin" in text:
-        inline_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("💬 Telegram ဖြင့် တိုက်ရိုက် စကားပြောရန်", url=f"https://t.me/{ADMIN_USERNAME}")]
-        ])
-        msg = (
-            "👇 <b>Admin နှင့် တိုက်ရိုက် ဆက်သွယ်ရန်</b> 👇\n\n"
-            f"👤 <b>Admin Telegram:</b> @{ADMIN_USERNAME}\n\n"
-            "၂၄ နာရီ ဝန်ဆောင်မှု ပေးနေပါသည်ခင်ဗျာ။ အောက်ပါ ခလုတ်ကို နှိပ်ပြီး <b>Telegram မှတစ်ဆင့် တိုက်ရိုက် ဆက်သွယ် စကားပြောနိုင်ပါသည်ခင်ဗျာ။</b>"
-        )
-        await update.message.reply_text(msg, parse_mode="HTML", reply_markup=inline_kb)
+                confirm_msg += (
+                    "━━━━━━━━━━━━━━━━━━━━\n"
+                    "⚠️ *ငွေလွှဲပြေစာ အတည်ပြုရန်:*\n"
+                    "ငွေလွှဲ Slip ပြေစာအား Admin ထံ ပေးပို့အတည်ပြုပေးပါခင်ဗျာ။\n"
+                    "(กรุณาส่งสลิปโอนเงินให้แอดมินเพื่อยืนยันรายการ)"
+                )
+                inline_kb = InlineKeyboardMarkup([
+                    [InlineKeyboardButton("💬 Admin ထံ ငွေလွှဲပြေစာ ပို့ရန်", url=f"https://t.me/{ADMIN_USERNAME}")]
+                ])
+                await update.message.reply_text(confirm_msg, parse_mode="Markdown", reply_markup=inline_kb)
+                return
 
-    # 12. Home
-    elif "Home" in text or "home" in text:
-        await update.message.reply_text("🏠 ပင်မစာမျက်နှာသို့ ရောက်ရှိနေပါပြီ။", reply_markup=get_main_menu(is_admin))
-
-    # 13. Broadcast Info for Admin
-    elif "Broadcast" in text or "broadcast" in text:
-        if not is_admin:
-            await update.message.reply_text("⛔ သင်သည် Admin မဟုတ်ပါသဖြင့် ဤကဏ္ဍကို သုံးခွင့်မရှိပါခင်ဗျာ။")
-            return
-        users_count = len(get_users())
+        # Matches မရှိပါက format မှားယွင်းကြောင်း အသိပေးခြင်း
         await update.message.reply_text(
-            f"📢 <b>Admin Broadcast စနစ်</b>\n\n"
-            f"👥 လက်ရှိ စာရင်းဝင် အသုံးပြုသူ: <b>{users_count}</b> ဦး\n\n"
-            "အသုံးပြုသူ အားလုံးထံ စာပို့လိုပါက အောက်ပါအတိုင်း စာရိုက်ပို့ပါ -\n\n"
-            "<code>/broadcast ပို့လိုသောစာသား</code>\n\n"
-            "ဥပမာ -\n"
-            "<code>/broadcast မင်္ဂလာပါ ယနေ့ ညနေ 2D ပရိုမိုးရှင်း စတင်ပါပြီ!</code>",
-            parse_mode="HTML"
+            "⚠️ ထိုးသည့် Format မှားယွင်းနေပါသည် ခင်ဗျာ။\n\n"
+            "👉 မြန်မာကျပ်: `45=500`\n"
+            "👉 ထိုင်းဘတ်: `45=20B` (သို့မဟုတ် `45=20ဘတ်`)\n"
+            "👉 3D ထိုးရန်: `789=1000` (သို့မဟုတ် `789=50B`)\n"
+            "ကျေးဇူးပြု၍ ပြန်လည် စာရိုက်ပို့ပေးပါခင်ဗျာ!"
         )
 
-# ==========================================
-# 8. PHOTO / PAYMENT SLIP HANDLER
-# ==========================================
-async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or not update.message.photo:
-        return
-    user = update.effective_user
-    add_user(user.id)
-    await update.message.reply_text(
-        f"✅ <b>ငွေလွှဲပြေစာ ပုံအား လက်ခံရရှိပါသည်!</b>\n\n"
-        f"🆔 သင့် User ID: <code>{user.id}</code>\n\n"
-        "ကျေးဇူးပြု၍ မိမိ၏ <b>KPay/Wave ဖုန်းနံပါတ်</b> နှင့် <b>ငွေပမာဏ</b> ကို စာရိုက်ပို့ပေးထားပါခင်ဗျာ။\n"
-        f"Admin (@{ADMIN_USERNAME}) ဘက်မှ ၂ မိနစ်အတွင်း အကောင့်ထဲ ငွေဖြည့်သွင်းပေးပါမည်ခင်ဗျာ! 🙏",
-        parse_mode="HTML"
-    )
+    # User က ဂဏန်း ၂ လုံး ရိုက်ပို့ပါက ပေါက်/မပေါက် အလိုအလျောက် စစ်ဆေးပေးခြင်း
+    elif len(text) == 2 and text.isdigit():
+        data = fetch_2d_data()
+        results = data.get("result", []) if data else []
+        valid_twods = []
+        if results:
+            for r in results:
+                if r.get("set") not in ["0.00", "0", "-", None]:
+                    valid_twods.append(str(r.get("twod", "")).zfill(2))
 
-# ==========================================
-# 9. CALLBACK QUERIES (REFRESH BUTTONS)
-# ==========================================
+        if not valid_twods:
+            await update.message.reply_text(
+                f"🎯 ဂဏန်း 【 {text} 】 အား စစ်ဆေးချက်:\n\n"
+                "⚠️ ယနေ့အတွက် ထွက်ဂဏန်းများ မထွက်ရှိသေးပါ (သို့မဟုတ် ဈေးကွက်ပိတ်ထားပါသည်) ခင်ဗျာ။\n"
+                "ထွက်ဂဏန်း ထွက်ပေါ်လာချိန်မှသာ ပြန်လည် တိုက်ဆိုင်စစ်ဆေးပေးပါမည်ခင်ဗျာ!\n"
+                "(รอผลออกรางวัล)"
+            )
+        elif text in valid_twods:
+            await update.message.reply_text(
+                f"🎯 ဂဏန်း 【 {text} 】 အား စစ်ဆေးချက်:\n\n"
+                "🎉 ဂုဏ်ယူပါသည်! ယနေ့ ပေါက်ဂဏန်းနှင့် တိုက်ဆိုင်ပါသည်! 💰✨\n"
+                "ยินดีด้วย! ถูกรางวัลหวย 2D 🎉\n"
+                "ဆုငွေ ထုတ်ယူရန် Admin ထံ ချက်ချင်း ဆက်သွယ်ပါခင်ဗျာ။"
+            )
+        else:
+            await update.message.reply_text(
+                f"🎯 ဂဏန်း 【 {text} 】 အား စစ်ဆေးချက်:\n\n"
+                "❌ ယနေ့ထွက်ရှိထားသော ပေါက်ဂဏန်းများနှင့် မတိုက်ဆိုင်သေးပါခင်ဗျာ။\n"
+                "နောက်ပွဲများတွင် ကံကောင်းပါစေခင်ဗျာ! 🍀\n"
+                "(ไม่ถูกรางวัล ขอให้โชคดีในงวดถัดไป)"
+            )
+
+# ==================== CALLBACK QUERY HANDLER ====================
+
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
+    data = query.data
 
-    if query.data == "refresh_results":
-        res_msg = format_results_message()
-        inline_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Refresh အသစ်ရယူရန်", callback_data="refresh_results")]
-        ])
+    if data == "refresh_2d":
+        msg = format_2d_message()
+        kb = InlineKeyboardMarkup([[InlineKeyboardButton("🔄 Refresh အသစ်ရယူရန်", callback_data="refresh_2d")]])
         try:
-            await query.edit_message_text(text=res_msg, parse_mode="HTML", reply_markup=inline_kb)
+            await query.edit_message_text(msg, parse_mode="Markdown", reply_markup=kb)
+            await query.answer("🔄 2D အချက်အလက်များ အသစ်ရယူပြီးပါပြီ!")
         except Exception:
-            pass
+            await query.answer("✅ နောက်ဆုံးရ အချက်အလက်အတိုင်း ဖြစ်ပါသည်")
 
-    elif query.data == "refresh_market":
-        market_msg = format_market_message()
-        inline_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Refresh ဈေးနှုန်းအသစ်ရယူရန်", callback_data="refresh_market")]
-        ])
-        try:
-            await query.edit_message_text(text=market_msg, parse_mode="HTML", reply_markup=inline_kb)
-        except Exception:
-            pass
+# ==================== MAIN APPLICATION ====================
 
-# ==========================================
-# 10. ADMIN COMMANDS (/setgold, /broadcast)
-# ==========================================
-async def set_gold_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    username = (user.username or "").lower()
-    if username != ADMIN_USERNAME.lower():
-        await update.message.reply_text("⛔ သင်သည် Admin မဟုတ်ပါသဖြင့် ဤ Command ကို သုံးခွင့်မရှိပါခင်ဗျာ။")
-        return
-
-    raw_text = " ".join(context.args)
-    if not raw_text or "|" not in raw_text:
-        await update.message.reply_text(
-            "🪙 <b>ရွှေဈေး/ငွေဈေး ပြင်ဆင်နည်း Format:</b>\n\n"
-            "<code>/setgold အခေါက်ရွှေ | ၁၅ပဲရည် | ကမ္ဘာ့ရွှေ | ဒေါ်လာ | ဘတ်</code>\n\n"
-            "ဥပမာ -\n"
-            "<code>/setgold 5,700,000 ကျပ် | 5,350,000 ကျပ် | $2,750 | 4,530 ကျပ် | 133 ကျပ်</code>",
-            parse_mode="HTML"
-        )
-        return
-
-    parts = [p.strip() for p in raw_text.split("|")]
-    if len(parts) >= 5:
-        ak, fifteen, world, usd, thb = parts[0], parts[1], parts[2], parts[3], parts[4]
-        save_market_data(ak, fifteen, world, usd, thb)
-        await update.message.reply_text(
-            "✅ <b>ဈေးကွက်ပေါက်ဈေးများကို အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ!</b>\n\n"
-            + format_market_message(),
-            parse_mode="HTML"
-        )
-    else:
-        await update.message.reply_text("⚠️ ဈေးနှုန်း ၅ ခုလုံးကို | (မတ်တတ်လိုင်း) ခြား၍ ပြည့်စုံစွာ ထည့်သွင်းပေးပါခင်ဗျာ။")
-
-async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    username = (user.username or "").lower()
-    if username != ADMIN_USERNAME.lower():
-        await update.message.reply_text("⛔ သင်သည် Admin မဟုတ်ပါသဖြင့် ဤ Command ကို သုံးခွင့်မရှိပါခင်ဗျာ။")
-        return
-
-    if not context.args:
-        await update.message.reply_text(
-            "📢 <b>Broadcast အသုံးပြုနည်း:</b>\n\n"
-            "<code>/broadcast သင်ပို့လိုသော စာသား</code>\n\n"
-            "ဥပမာ -\n"
-            "<code>/broadcast မင်္ဂလာပါ ယနေ့အတွက် 2D အထူးပရိုမိုးရှင်း စတင်ပါပြီ!</code>",
-            parse_mode="HTML"
-        )
-        return
-
-    text_to_send = " ".join(context.args)
-    users = get_users()
-    total = len(users)
-
-    if total == 0:
-        await update.message.reply_text("⚠️ စာပို့ရန် Bot အသုံးပြုသူ မရှိသေးပါခင်ဗျာ။")
-        return
-
-    status_msg = await update.message.reply_text(f"⏳ အသုံးပြုသူ {total} ဦးထံသို့ စာပို့နေပါသည်...")
-
-    success_count = 0
-    fail_count = 0
-
-    for uid in users:
-        try:
-            await context.bot.send_message(
-                chat_id=uid,
-                text=f"📢 <b>[သတင်းလွှာ / အသိပေးချက်]</b>\n\n{text_to_send}",
-                parse_mode="HTML"
-            )
-            success_count += 1
-            await asyncio.sleep(0.05)
-        except Exception:
-            fail_count += 1
-
-    await status_msg.edit_text(
-        f"✅ <b>Broadcast ပို့ဆောင်ပြီးစီးပါပြီ!</b>\n\n"
-        f"👥 စုစုပေါင်း: {total} ဦး\n"
-        f"🟢 အောင်မြင်စွာ ပို့ပြီး: {success_count} ဦး\n"
-        f"🔴 မရောက်ရှိသူ: {fail_count} ဦး",
-        parse_mode="HTML"
-    )
-
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
-    print(f"Bot Error occurred: {context.error}")
-
-# ==========================================
-# 11. MAIN APPLICATION LOOP (AUTO-RETRY)
-# ==========================================
 if __name__ == '__main__':
-    while True:
-        try:
-            print("🚀 Bot စတင် အလုပ်လုပ်နေပါပြီ...")
-            app = ApplicationBuilder().token(TOKEN).build()
-            app.add_handler(CommandHandler('start', start))
-            app.add_handler(CommandHandler('broadcast', broadcast_command))
-            app.add_handler(CommandHandler('setgold', set_gold_command))
-            app.add_handler(CallbackQueryHandler(handle_callback))
-            app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
-            app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_buttons))
-            app.add_error_handler(error_handler)
-            app.run_polling(drop_pending_updates=True)
-        except Exception as e:
-            print(f"Telegram connection error: {e}. Reconnecting in 5 seconds...")
-            time.sleep(5)
+    app = ApplicationBuilder().token(TOKEN).build()
+    app.add_handler(CommandHandler('start', start))
+    app.add_handler(CallbackQueryHandler(handle_callback))
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_buttons))
+    print("🚀 Myanmar & Thai 2D/3D Bot စတင် အလုပ်လုပ်နေပါပြီ...")
+    app.run_polling(drop_pending_updates=True)
