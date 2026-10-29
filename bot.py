@@ -36,7 +36,7 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain; charset=utf-8')
         self.end_headers()
-        self.wfile.write("Lucky2D3D Official Multi-Source Engine Running Live 24/7!".encode('utf-8'))
+        self.wfile.write("Myanmar2D3D Live Bot Multi-Source Engine Running Live 24/7!".encode('utf-8'))
 
     def log_message(self, format, *args):
         return
@@ -52,11 +52,10 @@ def start_health_server():
 threading.Thread(target=start_health_server, daemon=True).start()
 
 # ==================== BOT CONFIG & ADMIN ====================
-# Render Environment Variables (သို့မဟုတ်) Default တန်ဖိုးများ
-TOKEN = os.environ.get("BOT_TOKEN", "9029256827:AAEzKzZcNW8jiqrmx6-eJvdRsGu1ncpUaJI
-")
-ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", 8026136185))
-ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "myanmar2d3d_live_bot.").lstrip('@')
+TOKEN = os.environ.get("BOT_TOKEN", "9029256827:AAEzKzZcNW8jiqrmx6-eJvdRsGu1ncpUaJI").strip()
+ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", "8026136185"))
+BOT_USERNAME = "myanmar2d3d_live_bot"
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "myanmar2d3d_live_bot").lstrip('@')
 
 BETS_FILE = "bets_data.json"
 BALANCES_FILE = "balances.json"
@@ -136,10 +135,6 @@ def http_post_json(url, payload=None, timeout=8):
 
 # ==================== 2D FORMULA & THAI HOLIDAYS ====================
 def calculate_2d(set_val, val_val):
-    """
-    ထိုင်းစတော့အိတ်ချိန်း (SET) အညွှန်းကိန်း နှင့် တန်ဖိုးတို့မှ 2D ကို တရားဝင် ဖော်မြူလာအတိုင်း တွက်ထုတ်ခြင်း
-    SET Index ဒသမနောက်ဆုံးဂဏန်း + Value ဒသမနောက်ဆုံးဂဏန်း
-    """
     try:
         s_str = str(set_val).replace(",", "").strip()
         v_str = str(val_val).replace(",", "").strip()
@@ -152,7 +147,7 @@ def calculate_2d(set_val, val_val):
     return None
 
 def is_thai_market_holiday(dt):
-    if dt.weekday() in [5, 6]:  # စနေ နှင့် တနင်္ဂနွေ
+    if dt.weekday() in [5, 6]:
         return True, "စနေ/တနင်္ဂနွေ ဈေးကွက်ပိတ်ရက်"
 
     month_day = dt.strftime("%m-%d")
@@ -455,7 +450,7 @@ def format_live_winning_numbers():
         live_line = f"▫️ *နောက်ဆုံးထွက် တရားဝင်ဂဏန်း:* 【 *{last_num}* 】"
 
     msg = (
-        f"📊 *Lucky2D3D Official ရလဒ် - {display_date}*\n"
+        f"📊 *Myanmar2D3D Live Bot ရလဒ် - {display_date}*\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"{status_line}\n"
         f"{live_line}\n"
@@ -508,7 +503,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_name = user.first_name if user else "Customer"
     welcome_text = (
-        f"✨ *မင်္ဂလာပါ {user_name} ရေ - Lucky2D3D မှ နွေးထွေးစွာ ကြိုဆိုပါသည်* ✨\n\n"
+        f"✨ *မင်္ဂလာပါ {user_name} ရေ - @myanmar2d3d_live_bot မှ နွေးထွေးစွာ ကြိုဆိုပါသည်* ✨\n\n"
         "🏛️ ထိုင်းစတော့ဈေးကွက် (SET) တရားဝင် Live အချက်အလက်များနှင့်\n"
         "🏛️ ထိုင်းအစိုးရ ထီဗျူရို (GLO) တရားဝင်ဒေတာများကို တိုက်ရိုက်ဆွဲထုတ်ပေးသော စနစ်ဖြစ်ပါသည်ခင်ဗျာ!\n\n"
         "🇲🇲 *မြန်မာကျပ်ငွေ (MMK)* ဖြင့်ဖြစ်စေ\n"
@@ -688,7 +683,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = (
             "👇 *Admin နှင့် တိုက်ရိုက် ဆက်သွယ်ရန်* 👇\n\n"
             f"🆔 *Admin Telegram ID:* `{ADMIN_CHAT_ID}`\n"
-            f"👤 *Admin Telegram Username:* @{ADMIN_USERNAME}\n\n"
+            f"🤖 *Official Bot:* @{BOT_USERNAME}\n\n"
             "၂၄ နာရီ အချိန်မရွေး လွတ်လပ်စွာ ဆက်သွယ်နိုင်ပါသည်ခင်ဗျာ!"
         )
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=inline_kb)
@@ -786,7 +781,6 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 for base_num in num_items:
                     target_numbers = [base_num]
 
-                    # အာ / ဘတ် / R (Reverse) Logic
                     if has_reverse:
                         if len(base_num) == 2:
                             rev = base_num[::-1]
@@ -843,7 +837,6 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if recorded_list:
                 save_json_file(BETS_FILE, user_bets)
 
-                # ဘောင်ချာပြေစာ အလိုအလျောက် ထုတ်ပေးခြင်း
                 confirm_msg = (
                     "🧾 *ထီထိုးပြေစာဘောင်ချာ (Voucher)* 🧾\n"
                     "━━━━━━━━━━━━━━━━━━━━\n"
@@ -881,7 +874,6 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ])
                 await update.message.reply_text(confirm_msg, parse_mode="Markdown", reply_markup=inline_kb)
 
-                # Admin Chat ID (8026136185) သို့ အလိုအလျောက် Alert ပို့ခြင်း
                 try:
                     admin_alert = (
                         f"📢 *[အသစ်ထိုးစာရင်း ရောက်ရှိပါသည်]*\n"
@@ -905,7 +897,6 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # ၂ လုံး ဂဏန်း တိုက်ဆိုင်စစ်ဆေးခြင်း
     if len(text) == 2 and text.isdigit():
         d2 = fetch_realtime_2d()
         valid_twods = []
@@ -1060,15 +1051,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # Commands
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CommandHandler('set2d', admin_set_2d))
     app.add_handler(CommandHandler('set3d', admin_set_3d))
     app.add_handler(CommandHandler('reset_override', admin_reset))
 
-    # Callback & Messages
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_buttons))
 
-    print(f"🚀 Lucky2D3D Official Multi-Source Bot Started! Admin ID: {ADMIN_CHAT_ID}")
+    print(f"🚀 @{BOT_USERNAME} Started! Admin ID: {ADMIN_CHAT_ID}")
     app.run_polling(drop_pending_updates=True)
