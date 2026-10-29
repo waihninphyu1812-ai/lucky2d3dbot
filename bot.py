@@ -52,10 +52,11 @@ def start_health_server():
 threading.Thread(target=start_health_server, daemon=True).start()
 
 # ==================== BOT CONFIG & ADMIN ====================
-TOKEN = os.environ.get("BOT_TOKEN", "8988776248:AAFgvT1qJn60-eM71QicjcAXrioqk7kxOK4")
+# Render Environment Variables (သို့မဟုတ်) Default တန်ဖိုးများ
+TOKEN = os.environ.get("BOT_TOKEN", "9029256827:AAEzKzZcNW8jiqrmx6-eJvdRsGu1ncpUaJI
+")
 ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", 8026136185))
-ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "lucky2d3d_admin").lstrip('@')
-
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "myanmar2d3d_live_bot.").lstrip('@')
 
 BETS_FILE = "bets_data.json"
 BALANCES_FILE = "balances.json"
@@ -66,7 +67,7 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9,th;q=0.8",
 }
 
-# ==================== PERSISTENCE (BETS & BALANCES) ====================
+# ==================== DATA STORAGE (PERSISTENCE) ====================
 def load_json_file(filename, default):
     if not os.path.exists(filename):
         return default
@@ -151,25 +152,25 @@ def calculate_2d(set_val, val_val):
     return None
 
 def is_thai_market_holiday(dt):
-    if dt.weekday() in [5, 6]:  # Saturday & Sunday
+    if dt.weekday() in [5, 6]:  # စနေ နှင့် တနင်္ဂနွေ
         return True, "စနေ/တနင်္ဂနွေ ဈေးကွက်ပိတ်ရက်"
 
     month_day = dt.strftime("%m-%d")
     holidays = {
-        "01-01": "နှစ်သစ်ကူးပိတ်ရက် (New Year's Day)",
+        "01-01": "နှစ်သစ်ကူးပိတ်ရက် (New Year)",
         "01-02": "နှစ်သစ်ကူး အစားထိုးပိတ်ရက်",
-        "04-13": "သင်္ကြန်ပိတ်ရက် (Songkran Festival)",
-        "04-14": "သင်္ကြန်ပိတ်ရက် (Songkran Festival)",
-        "04-15": "သင်္ကြန်ပိတ်ရက် (Songkran Festival)",
-        "05-01": "အလုပ်သမားနေ့ (National Labour Day)",
-        "06-03": "မိဖုရားကြီး မွေးနေ့ (Queen Suthida's Birthday)",
-        "07-28": "ဘုရင်မင်းမြတ် မွေးနေ့ (King Vajiralongkorn's Birthday)",
+        "04-13": "သင်္ကြန်ပိတ်ရက် (Songkran)",
+        "04-14": "သင်္ကြန်ပိတ်ရက် (Songkran)",
+        "04-15": "သင်္ကြန်ပိတ်ရက် (Songkran)",
+        "05-01": "အလုပ်သမားနေ့ (Labour Day)",
+        "06-03": "မိဖုရားကြီး မွေးနေ့",
+        "07-28": "ဘုရင်မင်းမြတ် မွေးနေ့",
         "08-12": "မိခင်များနေ့ (Mother's Day)",
-        "10-13": "ဘုရင်ကြီး ဘူမိဘောလ် အောက်မေ့ဖွယ်နေ့ (King Bhumibol Memorial Day)",
+        "10-13": "ဘုရင်ကြီး ဘူမိဘောလ် အောက်မေ့ဖွယ်နေ့",
         "10-23": "ချူလာလောင်ကွန်းနေ့ (Chulalongkorn Day)",
         "12-05": "ဖခင်များနေ့ (Father's Day)",
-        "12-10": "ဖွဲ့စည်းပုံအခြေခံဥပဒေနေ့ (Constitution Day)",
-        "12-31": "နှစ်ဟောင်းကုန်ပိတ်ရက် (New Year's Eve)"
+        "12-10": "ဖွဲ့စည်းပုံအခြေခံဥပဒေနေ့",
+        "12-31": "နှစ်ဟောင်းကုန်ပိတ်ရက်"
     }
     if month_day in holidays:
         return True, holidays[month_day]
@@ -204,7 +205,7 @@ def fetch_realtime_2d():
     if is_holiday:
         data_result["is_open"] = False
 
-    # ၁။ SOURCE 1: ThaiStock2D API
+    # ၁။ SOURCE 1: ThaiStock2D API စမ်းသပ်ခြင်း
     try:
         raw = http_get_json("https://api.thaistock2d.com/live", timeout=6)
         if raw and isinstance(raw, dict) and "live" in raw:
@@ -260,7 +261,7 @@ def fetch_realtime_2d():
                     data_result["live_set"] = set_str
                     data_result["live_value"] = val_str
                     data_result["live_2d"] = calculate_2d(set_str, val_str) or "--"
-                    data_result["source"] = "Settrade Official Market Scraper (Fallback)"
+                    data_result["source"] = "Settrade Official Scraper (Fallback)"
         except Exception as e:
             print("Source 2 Fallback Error:", e)
 
@@ -562,6 +563,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🏠 ပင်မစာမျက်နှာသို့ ပြန်လည်ရောက်ရှိပါပြီခင်ဗျာ။", reply_markup=get_main_menu())
         return
 
+    # 🏆 ထီပေါက်စဉ် မီနူး
     if text in ["🏆 ထီပေါက်စဉ်", "ထီပေါက်စဉ်"]:
         lottery_menu_text = (
             "📣 *ထီပေါက်စဉ် မီနူး*\n"
@@ -583,6 +585,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(lottery_menu_text, parse_mode="Markdown", reply_markup=kb)
         return
 
+    # 🎯 2D ထိုး
     elif text in ["🎯 2D ထိုး", "🎯 2D ထိုးရန်"]:
         context.user_data["step"] = "select_2d_slot"
         slot_text = (
@@ -595,6 +598,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(slot_text, parse_mode="Markdown", reply_markup=get_2d_slot_menu())
         return
 
+    # အချိန်ရွေးချယ်ခြင်း (၁၂:၀၁ PM သို့မဟုတ် ၀၄:၃၀ PM)
     elif text in ["☀️ ၁၂:၀၁ PM (မနက်ပိုင်း)", "🌙 ၀၄:၃၀ PM (ညနေပိုင်း)"]:
         chosen_slot = "12:01 PM" if "၁၂:၀၁" in text else "04:30 PM"
         context.user_data["selected_slot"] = chosen_slot
@@ -618,6 +622,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(info_text, parse_mode="Markdown", reply_markup=get_main_menu())
         return
 
+    # 🎯 3D ထိုး
     elif text in ["🎯 3D ထိုး", "🎯 3D ထိုးရန်"]:
         context.user_data["selected_slot"] = "3D (03:30 PM)"
         bet_3d_info = (
@@ -635,6 +640,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(bet_3d_info, parse_mode="Markdown")
         return
 
+    # 💰 ငွေသွင်း/ငွေထုတ်
     elif text in ["💰 ငွေသွင်း/ငွေထုတ်", "💰 ငွေသွင်း / ငွေထုတ်"]:
         deposit_text = (
             "💰 *ငွေသွင်း / ငွေထုတ် ပြုလုပ်ရန်*\n"
@@ -652,6 +658,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(deposit_text, parse_mode="Markdown", reply_markup=inline_kb)
         return
 
+    # 💵 ငွေလက်ကျန်
     elif text in ["💵 ငွေလက်ကျန်", "💵 ငွေလက်ကျန်စစ်ရန်"]:
         bal = user_balances.get(str(user_id), {"mmk": 0, "thb": 0})
         bal_mmk = bal.get("mmk", 0)
@@ -672,6 +679,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(balance_text, parse_mode="Markdown", reply_markup=inline_kb)
         return
 
+    # 👩‍💻 Admin Account
     elif text in ["👩💻 Admin Account", "Admin Account", "👩‍💻 Admin Account"]:
         inline_kb = InlineKeyboardMarkup([
             [InlineKeyboardButton("💬 Admin ထံ Telegram ဖြင့် တိုက်ရိုက်ပြောရန်", url=f"tg://user?id={ADMIN_CHAT_ID}")],
@@ -680,13 +688,13 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = (
             "👇 *Admin နှင့် တိုက်ရိုက် ဆက်သွယ်ရန်* 👇\n\n"
             f"🆔 *Admin Telegram ID:* `{ADMIN_CHAT_ID}`\n"
-            f"👤 *Admin Telegram Username:* @{ADMIN_USERNAME}\n"
-            f"📧 *Admin Email:* `{ADMIN_EMAIL}`\n\n"
+            f"👤 *Admin Telegram Username:* @{ADMIN_USERNAME}\n\n"
             "၂၄ နာရီ အချိန်မရွေး လွတ်လပ်စွာ ဆက်သွယ်နိုင်ပါသည်ခင်ဗျာ!"
         )
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=inline_kb)
         return
 
+    # 🎮 Game ဆော့ရန်
     elif text in ["🎮 Game ဆော့ရန်", "🎮 ဂိမ်းဆော့ရန်"]:
         game_text = (
             "🎰 *ဂိမ်းကစားရန် နှင့် အကောင့်ဖွင့်ရန်* 🎮\n"
@@ -704,6 +712,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(game_text, parse_mode="Markdown", reply_markup=inline_kb)
         return
 
+    # 📜 ထိုးခဲ့သောမှတ်တမ်းများ
     elif text in ["📜 ထိုးခဲ့သောမှတ်တမ်းများ", "📜 ထိုးထားသော စာရင်းများ"]:
         bets = user_bets.get(str(user_id), [])
         if not bets:
@@ -777,6 +786,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 for base_num in num_items:
                     target_numbers = [base_num]
 
+                    # အာ / ဘတ် / R (Reverse) Logic
                     if has_reverse:
                         if len(base_num) == 2:
                             rev = base_num[::-1]
@@ -833,6 +843,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if recorded_list:
                 save_json_file(BETS_FILE, user_bets)
 
+                # ဘောင်ချာပြေစာ အလိုအလျောက် ထုတ်ပေးခြင်း
                 confirm_msg = (
                     "🧾 *ထီထိုးပြေစာဘောင်ချာ (Voucher)* 🧾\n"
                     "━━━━━━━━━━━━━━━━━━━━\n"
@@ -870,6 +881,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ])
                 await update.message.reply_text(confirm_msg, parse_mode="Markdown", reply_markup=inline_kb)
 
+                # Admin Chat ID (8026136185) သို့ အလိုအလျောက် Alert ပို့ခြင်း
                 try:
                     admin_alert = (
                         f"📢 *[အသစ်ထိုးစာရင်း ရောက်ရှိပါသည်]*\n"
@@ -893,6 +905,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    # ၂ လုံး ဂဏန်း တိုက်ဆိုင်စစ်ဆေးခြင်း
     if len(text) == 2 and text.isdigit():
         d2 = fetch_realtime_2d()
         valid_twods = []
@@ -1047,11 +1060,13 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TOKEN).build()
 
+    # Commands
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CommandHandler('set2d', admin_set_2d))
     app.add_handler(CommandHandler('set3d', admin_set_3d))
     app.add_handler(CommandHandler('reset_override', admin_reset))
 
+    # Callback & Messages
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_buttons))
 
