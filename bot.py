@@ -55,6 +55,7 @@ threading.Thread(target=start_health_server, daemon=True).start()
 TOKEN = os.environ.get("BOT_TOKEN", "8988776248:AAFgvT1qJn60-eM71QicjcAXrioqk7kxOK4")
 ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", 8026136185))
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "lucky2d3d_admin").lstrip('@')
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "lucky2d3d.official@gmail.com")
 
 BETS_FILE = "bets_data.json"
 BALANCES_FILE = "balances.json"
