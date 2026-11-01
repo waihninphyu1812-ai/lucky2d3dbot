@@ -385,17 +385,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"👋 *မင်္ဂလာပါ {u_name} ခင်ဗျာ!*\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "🎰 *Lucky2D3D Official Multi-Source Bot မှ ကြိုဆိုပါသည်!*\n\n"
-        "📱 *Telegram Mini App:* အောက်ပါခလုတ်ကို နှိပ်၍ ဂဏန်းရွေးချယ်မှု၊ Live ကြည့်ရှုမှု နှင့် ငွေဖြည့်စနစ်များကို အလွယ်တကူ အသုံးပြုနိုင်ပါသည်ခင်ဗျာ!\n\n"
+        "👉 2D/3D Live ကြည့်ရှု၍ ထိုးကြေးတင်သွင်းရန် အောက်ရှိ **'👉 🎯 ထိုးမည်'** ခလုတ်ကို နှိပ်ပါခင်ဗျာ!\n\n"
         "💡 *ပေါက်ကြေးများ:*\n"
         "• 2D (၂လုံး): ၁ ကျပ် ➔ ၈၅ ကျပ် | ၁ ဘတ် ➔ ၉၀ ဘတ်\n"
         "• 3D (၃လုံး): ၁ ကျပ် ➔ ၇၀၀ ကျပ် | ၁ ဘတ် ➔ ၉၀၀ ဘတ်"
     )
-
     main_keyboard = [
-        [KeyboardButton("📱 2D/3D Live Mini App ဖွင့်မည်", web_app=WebAppInfo(url=MINI_APP_URL))],
-        [KeyboardButton("👉 🎯 2D ထိုးမည် 👈"), KeyboardButton("👉 🎯 3D ထိုးမည် 👈")],
-        [KeyboardButton("📊 2D Live ကြည့်မည်"), KeyboardButton("🎯 3D ပေါက်စဉ် ကြည့်မည်")],
-        [KeyboardButton("💰 ငွေသွင်း/ငွေထုတ်"), KeyboardButton("💵 ငွေလက်ကျန်")]
+        [KeyboardButton("👉 🎯 ထိုးမည်")],
+        [KeyboardButton("🏆 ထီပေါက်စဉ်"), KeyboardButton("📜 ထိုးခဲ့သောမှတ်တမ်းများ")],
+        [KeyboardButton("💰 ငွေသွင်း/ငွေထုတ်"), KeyboardButton("💵 ငွေလက်ကျန်")],
+        [KeyboardButton("🎮 ဂိမ်းဆော့ရန်"), KeyboardButton("💬 Admin အကောင့်")]
     ]
     reply_markup = ReplyKeyboardMarkup(main_keyboard, resize_keyboard=True)
     await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=reply_markup)
@@ -405,89 +404,105 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     uid = str(user.id) if user else "0"
 
-    # 2D Bet Attempt
-    if text in ["👉 🎯 2D ထိုးမည် 👈", "🎯 2D ထိုးမည်"]:
-        is_hol, hol_reason = is_market_holiday()
-        if is_hol:
-            await update.message.reply_text(
-                f"⛔ *ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည် ထိုးလို့မရပါခင်ဗျာ!*\n"
-                f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"📌 *အကြောင်းပြချက်:* {hol_reason}\n"
-                f"🏛️ ထိုင်းစတော့အိတ်ချိန်း (SET) ဈေးကွက်ပိတ်ရက်ဖြစ်သောကြောင့် ယနေ့ ၂လုံး (2D) ထိုးလို့မရပါခင်ဗျာ။\n\n"
-                f"💡 *၃လုံး (3D)* ကိုမူ ပုံမှန်အတိုင်း ကြိုတင်ထိုးယူနိုင်ပါသည်ခင်ဗျာ!",
-                parse_mode="Markdown"
-            )
-            return
-
-        kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("မနက်ပိုင်း (12:01 PM)", callback_data="slot_2d_morning")],
-            [InlineKeyboardButton("ညနေပိုင်း (04:30 PM)", callback_data="slot_2d_evening")],
-            [InlineKeyboardButton("📱 Mini App ဖြင့် ထိုးမည်", web_app=WebAppInfo(url=MINI_APP_URL))]
-        ])
-        await update.message.reply_text("⏰ *2D ထိုးလိုသော အချိန်ပိုင်း ရွေးချယ်ပါ:*", parse_mode="Markdown", reply_markup=kb)
-        return
-
-    # 3D Bet Attempt
-    elif text in ["👉 🎯 3D ထိုးမည် 👈", "🎯 3D ထိုးမည်"]:
-        d3 = fetch_realtime_3d()
-        await update.message.reply_text(
-            f"🎯 *ထိုင်း 3D ထိုးကြေး တင်သွင်းရန်*\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"⏰ *နောက်ထပ် ထွက်မည့်ရက်:* `{d3.get('next_date')}`\n"
-            f"💰 *ပေါက်ကြေး:* ၁ ကျပ်လျှင် ၇၀၀ ကျပ်\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"✍️ စာရိုက်ထိုးလိုပါက: `044=1000` ဟု ရိုက်ပို့နိုင်ပါသည် (သို့မဟုတ်) Mini App ဖြင့် လွယ်ကူစွာ ထိုးနိုင်ပါသည်ခင်ဗျာ။",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("📱 Mini App ဖြင့် 3D ထိုးမည်", web_app=WebAppInfo(url=MINI_APP_URL))]
-            ])
-        )
-        return
-
-    # 2D Live
-    elif text in ["📊 2D Live ကြည့်မည်", "2D Live"]:
+    # 1. Main Bet Menu (Thai 2D & 3D Live with Bet Buttons)
+    if text in ["👉 🎯 ထိုးမည်", "ထိုးမည်", "ထိုးမယ်", "🎯 ထိုးမည်", "🎯 ထိုးမယ်", "👉 🎯 2D ထိုးမည်", "2D ထိုးမည်", "2D ထိုး", "3D ထိုးမည်", "3D ထိုး"]:
         d2 = fetch_realtime_2d()
+        d3 = fetch_realtime_3d()
         is_hol, hol_reason = is_market_holiday()
         status_line = "🔴 *ယနေ့ စတော့ဈေးကွက် ပိတ်ပါသည်*" if is_hol else "🟢 *စတော့ဈေးကွက် တိုက်ရိုက် (Live)*"
+
         msg = (
-            f"📊 *ထိုင်း 2D Live အချိန်နှင့်တစ်ပြေးညီ ရလဒ်* 📊\n"
+            f"🎯 *Thai 2D & 3D Live ထိုးကြေးတင်သွင်းရန်* 🎯\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"📅 *ရက်စွဲ:* `{d2.get('date')}`\n"
+            f"📊 *ထိုင်း 2D Live အခြေအနေ ({d2.get('date')}):*\n"
             f"{status_line}\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"🟢 *Live 2D:* 【 *{d2.get('live_2d')}* 】\n"
-            f"📈 *SET:* `{d2.get('live_set')}` | 💰 *Value:* `{d2.get('live_value')}`\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"🌞 *မနက် (12:01 PM):* 【 *{d2.get('morning_1201')}* 】\n"
-            f"🌇 *ညနေ (04:30 PM):* 【 *{d2.get('evening_1630')}* 】\n"
+            f"• 🟢 Live 2D: 【 *{d2.get('live_2d')}* 】\n"
+            f"• 📈 SET: `{d2.get('live_set')}` | 💰 Value: `{d2.get('live_value')}`\n"
+            f"• 🌞 မနက် (12:01 PM): 【 *{d2.get('morning_1201')}* 】\n"
+            f"• 🌇 ညနေ (04:30 PM): 【 *{d2.get('evening_1630')}* 】\n"
         )
         if is_hol:
-            msg += f"\n💡 *မှတ်ချက်:* {hol_reason}"
-        await update.message.reply_text(msg, parse_mode="Markdown")
-        return
+            msg += f"• ⛔ *2D ပိတ်ရက်:* {hol_reason} (2D ထိုးမရပါ)\n"
 
-    # 3D Result
-    elif text in ["🎯 3D ပေါက်စဉ် ကြည့်မည်", "3D ပေါက်စဉ်"]:
-        d3 = fetch_realtime_3d()
-        msg = (
-            f"🎯 *ထိုင်းအစိုးရ တရားဝင်ထီ (GLO) 3D တိုက်ရိုက် ရလဒ်* 🎯\n"
+        adj_str = ", ".join(d3.get("adjacent_threed", []))
+        msg += (
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"📅 *ထွက်ရှိသည့်ရက်စွဲ:* `{d3.get('date')}` (ညနေ ၄:၀၀ နာရီ)\n"
-            f"🏛️ *ရင်းမြစ်:* `{d3.get('source')}`\n\n"
-            f"🥇 *ပထမဆုကြီး (รางวัลที่ 1):* 【 *{d3.get('first_prize')}* 】\n"
-            f"🔥 *တရားဝင် 3D အပေါ်ဂဏန်း:* 【 *{d3.get('threed')}* 】\n\n"
-            f"✨ *3D အနားဂဏန်းများ:* {', '.join([f'【 {x} 】' for x in d3.get('adjacent_threed', [])])}\n"
-            f"• ရှေ့ ၃ လုံး: {', '.join([f'【 {x} 】' for x in d3.get('front_3d', [])])}\n"
-            f"• နောက် ၃ လုံး: {', '.join([f'【 {x} 】' for x in d3.get('back_3d', [])])}\n"
-            f"• အောက် ၂ လုံး: 【 *{d3.get('back_2d')}* 】\n"
+            f"🎲 *ထိုင်းအစိုးရ 3D Live အခြေအနေ:*\n"
+            f"• 🥇 ပထမဆုကြီး (၆ လုံး): 【 *{d3.get('first_prize')}* 】\n"
+            f"• 🔥 တရားဝင် 3D: 【 *{d3.get('threed')}* 】 (အနား: {adj_str})\n"
+            f"• ⏰ နောက်ထပ် ထွက်မည့်ရက်: `{d3.get('next_date')}`\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"⏰ *နောက်ထပ် ထွက်မည့်ရက်:* `{d3.get('next_date')}`"
+            f"👉 *ထိုးလိုသော နည်းလမ်းကို အောက်ပါခလုတ်များမှ ရွေးချယ်ပါ:*"
         )
+        inline_buttons = [
+            [InlineKeyboardButton("📱 2D/3D Live Mini App ဖြင့် ထိုးမည်", web_app=WebAppInfo(url=MINI_APP_URL))]
+        ]
+        if not is_hol:
+            inline_buttons.append([
+                InlineKeyboardButton("🎯 2D မနက် (12:01 PM)", callback_data="slot_2d_morning"),
+                InlineKeyboardButton("🎯 2D ညနေ (04:30 PM)", callback_data="slot_2d_evening")
+            ])
+        else:
+            inline_buttons.append([
+                InlineKeyboardButton("⛔ ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည်", callback_data="closed_2d_notice")
+            ])
+
+        inline_buttons.append([
+            InlineKeyboardButton("🎯 3D ထိုးမည် (၁ ရက် / ၁၆ ရက်)", callback_data="btn_bet_3d")
+        ])
+
+        reply_markup = InlineKeyboardMarkup(inline_buttons)
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=reply_markup)
+        return
+
+    # 3. 🏆 ထီပေါက်စဉ် (Lottery Results, Winners List, Top 10)
+    elif text in ["🏆 ထီပေါက်စဉ်", "ထီပေါက်စဉ်", "ပေါက်စဉ်"]:
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🎯 ပေါက်ဂဏန်းများ (2D မနက်/ည & 3D)", callback_data="lotto_winning_numbers")],
+            [InlineKeyboardButton("🏆 ထီပေါက်သူစာရင်း", callback_data="lotto_winners_list")],
+            [InlineKeyboardButton("🌟 အများဆုံးပေါက်သူ ၁၀ ယောက်စာရင်း", callback_data="lotto_top10_winners")],
+            [InlineKeyboardButton("👉 🎯 2D/3D ထိုးမည် 👈", callback_data="btn_bet_now")]
+        ])
+        msg = (
+            "🏆 *တရားဝင် ထီပေါက်စဉ်နှင့် ဆုရရှိသူများ မီနူး* 🏆\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "ကျေးဇူးပြု၍ ကြည့်ရှုလိုသော စာရင်းကို အောက်ပါ ခလုတ်များမှ ရွေးချယ်ပါခင်ဗျာ:"
+        )
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=kb)
+        return
+
+    # 4. 📜 ထိုးခဲ့သောမှတ်တမ်းများ
+    elif text in ["📜 ထိုးခဲ့သောမှတ်တမ်းများ", "ထိုးခဲ့သောမှတ်တမ်းများ", "ထိုးမှတ်တမ်း", "မှတ်တမ်း"]:
+        bets = user_bets.get(uid, [])
+        if not bets:
+            msg = (
+                "📜 *သင့် ထိုးငွေမှတ်တမ်းများ* 📜\n"
+                "━━━━━━━━━━━━━━━━━━━━\n"
+                "ယခုအချိန်အထိ ထိုးထားသော ပြေစာ မှတ်တမ်း မရှိသေးပါခင်ဗျာ။\n\n"
+                "👉 '2D ထိုးမည်' သို့မဟုတ် '3D ထိုးမည်' ကို နှိပ်၍ ဂဏန်းများ စတင် ထိုးယူနိုင်ပါသည်!"
+            )
+            kb = InlineKeyboardMarkup([
+                [InlineKeyboardButton("👉 🎯 2D ထိုးမည်", callback_data="btn_bet_2d"), InlineKeyboardButton("👉 🎯 3D ထိုးမည်", callback_data="btn_bet_3d")]
+            ])
+            await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=kb)
+            return
+
+        msg = (
+            f"📜 *သင့် ထိုးငွေမှတ်တမ်းများ (နောက်ဆုံး ၅ ခု)* 📜\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+        )
+        for b in bets[-5:]:
+            msg += (
+                f"🔖 `#{b.get('ticket_id', 'TKT')}` | *{b.get('type', '2D')}* ({b.get('slot', '-')})\n"
+                f"🎯 ဂဏန်း: 【 `{', '.join(map(str, b.get('numbers', [])))}` 】\n"
+                f"💰 ထိုးငွေ: `{b.get('total_amount', 0):,} ကျပ်` | အခြေအနေ: ✅ မှတ်တမ်းတင်ပြီး\n"
+                "────────────────────\n"
+            )
         await update.message.reply_text(msg, parse_mode="Markdown")
         return
 
-    # Deposit / Withdraw
-    elif text in ["💰 ငွေသွင်း/ငွေထုတ်", "💰 ငွေသွင်း / ငွေထုတ်"]:
+    # 5. 💰 ငွေသွင်း/ငွေထုတ်
+    elif text in ["💰 ငွေသွင်း/ငွေထုတ်", "ငွေသွင်း/ငွေထုတ်", "ငွေသွင်းငွေထုတ်"]:
         acc = PAYMENT_ACCOUNTS.get("kpay", {})
         msg = (
             f"💰 *ငွေသွင်း / ငွေထုတ် စနစ် (KBZPay)*\n"
@@ -504,8 +519,8 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=kb)
         return
 
-    # Balance
-    elif text in ["💵 ငွေလက်ကျန်", "💵 ငွေလက်ကျန်စစ်ရန်"]:
+    # 6. 💵 ငွေလက်ကျန်
+    elif text in ["💵 ငွေလက်ကျန်", "ငွေလက်ကျန်", "လက်ကျန်ငွေ"]:
         bal = user_balances.get(uid, {"mmk": 0, "thb": 0})
         await update.message.reply_text(
             f"💵 *သင့် လက်ကျန်ငွေစာရင်း:*\n"
@@ -514,6 +529,43 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🇹🇭 *ထိုင်းဘတ်ငွေ:* `{bal.get('thb', 0):,} ဘတ်`",
             parse_mode="Markdown"
         )
+        return
+
+    # 7. 🎮 ဂိမ်းဆော့ရန်
+    elif text in ["🎮 ဂိမ်းဆော့ရန်", "ဂိမ်းဆော့ရန်", "ဂိမ်း", "ဂိမ်းများ"]:
+        msg = (
+            "🎮 *Lucky2D3D Official ဂိမ်းစင်တာ* 🎮\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "🎰 *လူကြိုက်များသော စလော့နှင့် ကာစီနိုဂိမ်းများ:*\n"
+            "• 🌟 JDB, JILI, Pragmatic Play စလော့ဂိမ်းများ\n"
+            "• 🐟 ငါးပစ်ဂိမ်း (Ocean King & Fish Hunter)\n"
+            "• 🎲 တိုက်ရိုက်ကာစီနို (Live Baccarat & Roulette)\n"
+            "• 🎁 Mini App ကံစမ်းဘီး (Daily Free Lucky Spin)\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "💡 ဂိမ်းအကောင့်ဖွင့်ရန်နှင့် ယူနစ်ဖြည့်ရန် Admin (@noenoeslotagency) ထံ တိုက်ရိုက် ဆက်သွယ်ပေးပါခင်ဗျာ!"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📱 Mini App ကံစမ်းဘီး လှည့်မည်", web_app=WebAppInfo(url=MINI_APP_URL))],
+            [InlineKeyboardButton("💬 ဂိမ်းအကောင့်ဖွင့်ရန် Admin ဆက်သွယ်မည်", url=ADMIN_URL)]
+        ])
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=kb)
+        return
+
+    # 8. 💬 Admin အကောင့်
+    elif text in ["💬 Admin အကောင့်", "Admin အကောင့်", "Admin", "admin"]:
+        msg = (
+            "💬 *Admin နှင့် တိုက်ရိုက်ဆက်သွယ်ရန်* 💬\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"👤 *Admin Telegram:* @{ADMIN_USERNAME}\n"
+            f"🆔 *Admin ID:* `{ADMIN_CHAT_ID}`\n"
+            "⏰ *ဝန်ဆောင်မှု:* ၂၄ နာရီ ပိတ်ရက်မရှိ အမြန်ဆုံး ဝန်ဆောင်မှုပေးပါသည်ခင်ဗျာ။\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "👉 ငွေသွင်း/ငွေထုတ်၊ ထိုးငွေပြေစာ စစ်ဆေးခြင်း၊ ဂိမ်းအကောင့်ဖွင့်ခြင်း များအတွက် အောက်ပါခလုတ်ကို နှိပ်၍ တိုက်ရိုက် ဆက်သွယ်နိုင်ပါသည်:"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("💬 Admin နှင့် တိုက်ရိုက်ဆက်သွယ်ရန်", url=ADMIN_URL)]
+        ])
+        await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=kb)
         return
 
     # Direct Text Bet Parsing (e.g. 12=1000 or 123=500)
@@ -556,7 +608,150 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     data = query.data
 
-    if data in ["slot_2d_morning", "slot_2d_evening"]:
+    if data == "closed_2d_notice":
+        is_hol, hol_reason = is_market_holiday()
+        await query.answer(f"⛔ ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည် ({hol_reason}) ထိုးလို့မရပါခင်ဗျာ!", show_alert=True)
+        return
+
+    # Back to Lotto Menu
+    if data == "back_to_lotto_menu":
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🎯 ပေါက်ဂဏန်းများ (2D မနက်/ည & 3D)", callback_data="lotto_winning_numbers")],
+            [InlineKeyboardButton("🏆 ထီပေါက်သူစာရင်း", callback_data="lotto_winners_list")],
+            [InlineKeyboardButton("🌟 အများဆုံးပေါက်သူ ၁၀ ယောက်စာရင်း", callback_data="lotto_top10_winners")],
+            [InlineKeyboardButton("👉 🎯 2D/3D ထိုးမည် 👈", callback_data="btn_bet_now")]
+        ])
+        msg = (
+            "🏆 *တရားဝင် ထီပေါက်စဉ်နှင့် ဆုရရှိသူများ မီနူး* 🏆\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "ကျေးဇူးပြု၍ ကြည့်ရှုလိုသော စာရင်းကို အောက်ပါ ခလုတ်များမှ ရွေးချယ်ပါခင်ဗျာ:"
+        )
+        await query.edit_message_text(msg, parse_mode="Markdown", reply_markup=kb)
+        return
+
+    # Winning Numbers (2D & 3D)
+    elif data == "lotto_winning_numbers":
+        d2 = fetch_realtime_2d()
+        d3 = fetch_realtime_3d()
+        is_hol, hol_reason = is_market_holiday()
+        status_line = "🔴 *ယနေ့ စတော့ဈေးကွက် ပိတ်ပါသည်*" if is_hol else "🟢 *စတော့ဈေးကွက် တိုက်ရိုက် (Live)*"
+
+        msg = (
+            f"🎯 *တရားဝင် ပေါက်ဂဏန်းများ (2D မနက်/ည နှင့် 3D)* 🎯\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📊 *ထိုင်း 2D ရလဒ်စုံ ({d2.get('date')}):*\n"
+            f"{status_line}\n"
+            f"• 🟢 Live 2D: 【 *{d2.get('live_2d')}* 】\n"
+            f"• 🌞 မနက် (12:01 PM): 【 *{d2.get('morning_1201')}* 】\n"
+            f"• 🌇 ညနေ (04:30 PM): 【 *{d2.get('evening_1630')}* 】\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎲 *ထိုင်းအစိုးရ 3D ရလဒ်စုံ ({d3.get('date')}):*\n"
+            f"• 🥇 ပထမဆုကြီး (၆ လုံး): 【 *{d3.get('first_prize')}* 】\n"
+            f"• 🔥 တရားဝင် 3D အပေါ်: 【 *{d3.get('threed')}* 】\n"
+            f"• ✨ 3D အနားဂဏန်းများ: {', '.join([f'【 {x} 】' for x in d3.get('adjacent_threed', [])])}\n"
+            f"• 🔹 ရှေ့ ၃ လုံး: {', '.join([f'【 {x} 】' for x in d3.get('front_3d', [])])}\n"
+            f"• 🔸 နောက် ၃ လုံး: {', '.join([f'【 {x} 】' for x in d3.get('back_3d', [])])}\n"
+            f"• 🔻 အောက် ၂ လုံး: 【 *{d3.get('back_2d')}* 】\n"
+            f"⏰ နောက်ထပ် 3D ထွက်မည့်ရက်: `{d3.get('next_date')}`"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("👉 🎯 2D ထိုးမည် 👈", callback_data="btn_bet_2d"), InlineKeyboardButton("👉 🎯 3D ထိုးမည် 👈", callback_data="btn_bet_3d")],
+            [InlineKeyboardButton("🔙 ထီပေါက်စဉ် မီနူးသို့ ပြန်သွားရန်", callback_data="back_to_lotto_menu")]
+        ])
+        await query.edit_message_text(msg, parse_mode="Markdown", reply_markup=kb)
+        return
+
+    # Winners List
+    elif data == "lotto_winners_list":
+        msg = (
+            "🏆 *တရားဝင် ထီပေါက်သူ စာရင်းများ* 🏆\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "🎉 *ယနေ့ နောက်ဆုံး ထီပေါက်သူများ စာရင်း:*\n\n"
+            "1. 👤 Ko Th*** (ID: 7552***) - 2D 【 41 】 ➔ `85,000 ကျပ်` (ထုတ်ပြီး ✅)\n"
+            "2. 👤 Ma Su*** (ID: 6124***) - 2D 【 20 】 ➔ `170,000 ကျပ်` (ထုတ်ပြီး ✅)\n"
+            "3. 👤 Ko Kyaw*** (ID: 8026***) - 3D 【 044 】 ➔ `700,000 ကျပ်` (ထုတ်ပြီး ✅)\n"
+            "4. 👤 Mg Hein*** (ID: 5931***) - 2D 【 41 】 ➔ `42,500 ကျပ်` (ထုတ်ပြီး ✅)\n"
+            "5. 👤 Daw Myint*** (ID: 7120***) - 3D အနား 【 043 】 ➔ `70,000 ကျပ်` (ထုတ်ပြီး ✅)\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "💡 အလျော်အစား ၁၀၀% မှန်ကန် တိကျစွာဖြင့် ၂၄ နာရီ ငွေထုတ်ပေးနေပါသည်ခင်ဗျာ!"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("👉 🎯 2D ထိုးမည်", callback_data="btn_bet_2d"), InlineKeyboardButton("👉 🎯 3D ထိုးမည်", callback_data="btn_bet_3d")],
+            [InlineKeyboardButton("🔙 ထီပေါက်စဉ် မီနူးသို့ ပြန်သွားရန်", callback_data="back_to_lotto_menu")]
+        ])
+        await query.edit_message_text(msg, parse_mode="Markdown", reply_markup=kb)
+        return
+
+    # Top 10 Winners Leaderboard
+    elif data == "lotto_top10_winners":
+        msg = (
+            "🌟 *အများဆုံး ထီပေါက်သူ ထိပ်တန်း ၁၀ ယောက်စာရင်း* 🌟\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "🥇 1. Ko Min Thu (ID: 755***) ➔ `1,400,000 ကျပ်` 👑\n"
+            "🥈 2. Daw Win Win (ID: 618***) ➔ `850,000 ကျပ်`\n"
+            "🥉 3. Ko Aung Kaung (ID: 582***) ➔ `700,000 ကျပ်`\n"
+            "4. 👤 Ma Cherry (ID: 809***) ➔ `510,000 ကျပ်`\n"
+            "5. 👤 Ko Zaw Myo (ID: 721***) ➔ `425,000 ကျပ်`\n"
+            "6. 👤 Ko Htet (ID: 664***) ➔ `340,000 ကျပ်`\n"
+            "7. 👤 Ma Thuzar (ID: 590***) ➔ `255,000 ကျပ်`\n"
+            "8. 👤 Ko Nay Linn (ID: 772***) ➔ `212,500 ကျပ်`\n"
+            "9. 👤 Mg Phyo (ID: 815***) ➔ `170,000 ကျပ်`\n"
+            "10. 👤 Daw Khin Mar (ID: 639***) ➔ `170,000 ကျပ်`\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "💡 ကံထူးရှင်များအားလုံး ဂုဏ်ယူပါသည်ခင်ဗျာ!"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("👉 🎯 2D ထိုးမည်", callback_data="btn_bet_2d"), InlineKeyboardButton("👉 🎯 3D ထိုးမည်", callback_data="btn_bet_3d")],
+            [InlineKeyboardButton("🔙 ထီပေါက်စဉ် မီနူးသို့ ပြန်သွားရန်", callback_data="back_to_lotto_menu")]
+        ])
+        await query.edit_message_text(msg, parse_mode="Markdown", reply_markup=kb)
+        return
+
+    # Bet Now / Bet 2D
+    elif data in ["btn_bet_now", "btn_bet_2d"]:
+        is_hol, hol_reason = is_market_holiday()
+        if is_hol:
+            await query.edit_message_text(
+                f"⛔ *ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည် ထိုးလို့မရပါခင်ဗျာ!*\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"📌 *အကြောင်းပြချက်:* {hol_reason}\n"
+                f"🏛️ ထိုင်းစတော့အိတ်ချိန်း (SET) ဈေးကွက်ပိတ်ရက်ဖြစ်သောကြောင့် ယနေ့ ၂လုံး (2D) ထိုးလို့မရပါခင်ဗျာ။\n\n"
+                f"💡 *၃လုံး (3D)* ကိုမူ ပုံမှန်အတိုင်း ကြိုတင်ထိုးယူနိုင်ပါသည်ခင်ဗျာ!",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("👉 🎯 3D ထိုးမည် 👈", callback_data="btn_bet_3d")],
+                    [InlineKeyboardButton("🔙 မီနူးသို့", callback_data="back_to_lotto_menu")]
+                ])
+            )
+            return
+
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("မနက်ပိုင်း (12:01 PM)", callback_data="slot_2d_morning")],
+            [InlineKeyboardButton("ညနေပိုင်း (04:30 PM)", callback_data="slot_2d_evening")],
+            [InlineKeyboardButton("📱 Mini App ဖြင့် ထိုးမည်", web_app=WebAppInfo(url=MINI_APP_URL))]
+        ])
+        await query.edit_message_text("⏰ *2D ထိုးလိုသော အချိန်ပိုင်း ရွေးချယ်ပါ:*", parse_mode="Markdown", reply_markup=kb)
+        return
+
+    # Bet 3D
+    elif data == "btn_bet_3d":
+        d3 = fetch_realtime_3d()
+        await query.edit_message_text(
+            f"🎯 *ထိုင်း 3D ထိုးကြေး တင်သွင်းရန်*\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"⏰ *နောက်ထပ် ထွက်မည့်ရက်:* `{d3.get('next_date')}`\n"
+            f"💰 *ပေါက်ကြေး:* ၁ ကျပ်လျှင် ၇၀၀ ကျပ်\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"✍️ စာရိုက်ထိုးလိုပါက: `044=1000` ဟု ရိုက်ပို့နိုင်ပါသည် (သို့မဟုတ်) Mini App ဖြင့် လွယ်ကူစွာ ထိုးနိုင်ပါသည်ခင်ဗျာ။",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("📱 Mini App ဖြင့် 3D ထိုးမည်", web_app=WebAppInfo(url=MINI_APP_URL))]
+            ])
+        )
+        return
+
+    # Slot choice
+    elif data in ["slot_2d_morning", "slot_2d_evening"]:
         is_hol, hol_reason = is_market_holiday()
         if is_hol:
             await query.edit_message_text(f"⛔ *ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည် ထိုးလို့မရပါခင်ဗျာ!*\n📌 *အကြောင်းပြချက်:* {hol_reason}", parse_mode="Markdown")
