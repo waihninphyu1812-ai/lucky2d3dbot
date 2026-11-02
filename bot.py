@@ -14,7 +14,8 @@ from telegram import (
     KeyboardButton,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
-    WebAppInfo
+    WebAppInfo,
+    MenuButtonWebApp
 )
 from telegram.ext import (
     ApplicationBuilder,
@@ -2863,9 +2864,18 @@ async def admin_topup(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
 
+async def on_startup(application):
+    try:
+        await application.bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(text="🎯 ထိုးမယ်", web_app=WebAppInfo(url=MINI_APP_URL))
+        )
+        print("✅ Telegram Menu Button successfully updated to '🎯 ထိုးမယ်'!")
+    except Exception as e:
+        print("Menu button update notice:", e)
+
 # ==================== MAIN APPLICATION ====================
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = ApplicationBuilder().token(TOKEN).post_init(on_startup).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("set3d", admin_set_3d))
