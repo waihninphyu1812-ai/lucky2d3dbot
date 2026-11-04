@@ -32,7 +32,7 @@ ADMIN_CHAT_ID = int(os.environ.get("ADMIN_CHAT_ID", 1533228735))
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "noenoeslotagency").lstrip("@")
 ADMIN_URL = f"https://t.me/{ADMIN_USERNAME}"
 RENDER_EXTERNAL_URL = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
-MINI_APP_URL = RENDER_EXTERNAL_URL if RENDER_EXTERNAL_URL else "https://t.me/myanmar2d3d_live_bot/app"
+MINI_APP_URL = os.environ.get("MINI_APP_URL", RENDER_EXTERNAL_URL if RENDER_EXTERNAL_URL else "https://t.me/myanmar2d3d_live_bot/app").rstrip("/")
 
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 BETS_FILE = os.path.join(DATA_DIR, "user_bets.json")
@@ -68,18 +68,32 @@ PAYMENT_ACCOUNTS = {
         "number": os.environ.get("KPAY_NUMBER", "09123456789"),
         "color": "#1d3557",
         "icon": "🔵",
-        "currency": "MMK"
+        "currency": "MMK",
+        "qr": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={os.environ.get('KPAY_NUMBER', '09123456789')}"
+    },
+    "promptpay": {
+        "id": "promptpay",
+        "title": "PromptPay (Prove Pay)",
+        "name": os.environ.get("PROMPTPAY_NAME", "Noe Noe"),
+        "number": os.environ.get("PROMPTPAY_NUMBER", "0987654321"),
+        "color": "#005696",
+        "icon": "🇹🇭",
+        "currency": "THB",
+        "qr": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={os.environ.get('PROMPTPAY_NUMBER', '0987654321')}"
     },
     "kbank": {
         "id": "kbank",
-        "title": "Kasikorn (KBank THB)",
+        "title": "Kasikorn Bank (KBank)",
         "name": os.environ.get("KBANK_NAME", "Noe Noe"),
         "number": os.environ.get("KBANK_NUMBER", "123-4-56789-0"),
-        "color": "#2a9d8f",
-        "icon": "🇹🇭",
-        "currency": "THB"
+        "color": "#138f2d",
+        "icon": "🟢",
+        "currency": "THB",
+        "qr": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={os.environ.get('KBANK_NUMBER', '123-4-56789-0')}"
     }
 }
+
+pending_text_bets = {}
 
 admin_override = {"2d": None, "3d": None}
 
@@ -996,6 +1010,59 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       transform: scale(0.98);
     }
 
+    
+    /* PromptPay Card */
+    .promptpay-card {
+      background: linear-gradient(135deg, #005696 0%, #002244 100%);
+      color: #ffffff;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 10px 0 14px 0;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    .promptpay-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .qr-box {
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 12px;
+      display: inline-block;
+      margin: 8px auto 10px auto;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      border: 1px solid #cbd5e1;
+    }
+    .qr-box img {
+      width: 170px;
+      height: 170px;
+      display: block;
+      border-radius: 6px;
+    }
+    .pay-tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: #e2e8f0;
+      color: var(--text-sub);
+      font-weight: 700;
+      font-size: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pay-tab-btn.active {
+      background: var(--primary-blue);
+      color: #ffffff;
+    }
+
     /* ================= KPay Deposit Details Card ================= */
     .kpay-card {
       background: linear-gradient(135deg, #1b3557 0%, #0d1b2a 100%);
@@ -1230,15 +1297,25 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
   <!-- ================= TAB 1: ပင်မ (HOME DASHBOARD) ================= -->
   <main id="tab-home" class="tab-content active">
 
-    <!-- Blue Royal Balance Card -->
+    <!-- Blue Royal Balance Card (MMK & THB) -->
     <div class="balance-card">
       <div class="bal-top-row">
-        <span class="bal-label">လက်ကျန်ငွေ</span>
+        <span class="bal-label">ပိုက်ဆံအိတ် လက်ကျန်ငွေ</span>
         <span class="bal-link" onclick="switchDockTab('records')">ငွေစာရင်း &rarr;</span>
       </div>
-      <div class="bal-amount-row">
-        <span class="bal-amount" id="homeBalanceDisplay">0</span>
-        <span class="bal-unit">ကျပ်</span>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin: 10px 0 14px 0;">
+        <div style="background:rgba(255,255,255,0.14); padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
+          <div style="font-size:11px; opacity:0.85;">🇲🇲 မြန်မာကျပ် (MMK)</div>
+          <div style="font-size:20px; font-weight:800; margin-top:2px;">
+            <span id="homeBalanceMmk">0</span> <span style="font-size:13px; font-weight:600;">Ks</span>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.14); padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
+          <div style="font-size:11px; opacity:0.85;">🇹🇭 ထိုင်းဘတ် (THB)</div>
+          <div style="font-size:20px; font-weight:800; margin-top:2px;">
+            <span id="homeBalanceThb">0</span> <span style="font-size:13px; font-weight:600;">฿</span>
+          </div>
+        </div>
       </div>
       <div class="bal-btn-row">
         <button class="btn-deposit" onclick="openDepositModal()">
@@ -1336,15 +1413,22 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       </div>
 
       <!-- Payment Mode -->
-      <label class="form-label" style="margin-top: 12px;">၂။ ငွေပေးချေမှု ပုံစံ:</label>
+            <!-- Currency Selection -->
+      <label class="form-label">၂။ ထိုးငွေ ငွေကြေး ရွေးချယ်ပါ:</label>
+      <div class="segmented-control" id="currency2d" style="margin-bottom:12px;">
+        <button class="seg-btn active" id="btnCur2dMmk" onclick="set2dCurrency('MMK')">🇲🇲 မြန်မာကျပ် (ပေါက်: 1:85)</button>
+        <button class="seg-btn" id="btnCur2dThb" onclick="set2dCurrency('THB')">🇹🇭 ထိုင်းဘတ် (ပေါက်: 1:80 - 5฿➔400฿)</button>
+      </div>
+
+      <label class="form-label">၃။ ငွေပေးချေမှု ပုံစံ:</label>
       <div class="segmented-control" id="payMode2d">
         <button class="seg-btn active" onclick="set2dPayMode('wallet', this)">💼 Wallet လက်ကျန်ငွေ</button>
-        <button class="seg-btn" onclick="set2dPayMode('slip', this)">🧾 ပြေစာ Slip ထုတ်မည်</button>
+        <button class="seg-btn" onclick="set2dPayMode('bank_qr', this)">💳 ဘဏ်ငွေ / QR Pay (KPay / PromptPay)</button>
       </div>
 
       <!-- Number Input -->
       <div class="form-group" style="margin-top: 12px;">
-        <label class="form-label">၃။ ထိုးလိုသော ဂဏန်းများ (ကော်မာ ခြား၍ ရိုက်ထည့်နိုင်ပါသည်):</label>
+        <label class="form-label">၄။ ထိုးလိုသော ဂဏန်းများ (ကော်မာ ခြား၍ ရိုက်ထည့်နိုင်ပါသည်):</label>
         <input type="text" id="input2dNumbers" class="input-box" placeholder="ဥပမာ: 12, 45, 89 (သို့မဟုတ် ဇယားမှ ရွေးပါ)">
         <div class="chips-row">
           <button class="chip-btn" onclick="pickQuickPattern('ပတ်သီး')">ပတ်သီး</button>
@@ -1357,14 +1441,14 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       </div>
 
       <!-- 10x10 Grid -->
-      <label class="form-label">၄။ ဂဏန်းကွက် ဇယား (နှိပ်၍ ရွေးပါ):</label>
+      <label class="form-label">၅။ ဂဏန်းကွက် ဇယား (နှိပ်၍ ရွေးပါ):</label>
       <div class="grid-10x10" id="grid2DNumbers"></div>
 
       <!-- Amount Input -->
       <div class="form-group" style="margin-top: 14px;">
-        <label class="form-label">၅။ တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်):</label>
+        <label class="form-label" id="label2dAmount">၆။ တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်) - ပေါက်ကြေး 1:85:</label>
         <input type="number" id="input2dAmount" class="input-box" placeholder="1000" value="1000">
-        <div class="chips-row">
+        <div class="chips-row" id="chipsRow2d">
           <button class="chip-btn" onclick="setAmount2d(500)">500</button>
           <button class="chip-btn" onclick="setAmount2d(1000)">1,000</button>
           <button class="chip-btn" onclick="setAmount2d(3000)">3,000</button>
@@ -1444,9 +1528,17 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
     <div class="card">
       <div class="card-title">🎯 ၃ လုံး (3D) ထိုးကြေး တင်သွင်းရန်</div>
 
+      <!-- Currency Selection 3D -->
+      <label class="form-label">၁။ ထိုးငွေ ငွေကြေး ရွေးချယ်ပါ:</label>
+      <div class="segmented-control" id="currency3d" style="margin-bottom:12px;">
+        <button class="seg-btn active" id="btnCur3dMmk" onclick="set3dCurrency('MMK')">🇲🇲 မြန်မာကျပ် (ပေါက်: 1:700)</button>
+        <button class="seg-btn" id="btnCur3dThb" onclick="set3dCurrency('THB')">🇹🇭 ထိုင်းဘတ် (ပေါက်: 1:500 - 10฿➔5,000฿)</button>
+      </div>
+
+      <label class="form-label">၂။ ငွေပေးချေမှု ပုံစံ:</label>
       <div class="segmented-control" id="payMode3d">
         <button class="seg-btn active" onclick="set3dPayMode('wallet', this)">💼 Wallet လက်ကျန်ငွေ</button>
-        <button class="seg-btn" onclick="set3dPayMode('slip', this)">🧾 ပြေစာ Slip ထုတ်မည်</button>
+        <button class="seg-btn" onclick="set3dPayMode('bank_qr', this)">💳 ဘဏ်ငွေ / QR Pay (KPay / PromptPay)</button>
       </div>
 
       <div class="form-group" style="margin-top:12px;">
@@ -1455,9 +1547,9 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       </div>
 
       <div class="form-group">
-        <label class="form-label">တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်):</label>
+        <label class="form-label" id="label3dAmount">တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်) - ပေါက်ကြေး 1:700:</label>
         <input type="number" id="input3dAmount" class="input-box" placeholder="1000" value="1000">
-        <div class="chips-row">
+        <div class="chips-row" id="chipsRow3d">
           <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=500">500</button>
           <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=1000">1,000</button>
           <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=3000">3,000</button>
@@ -1535,11 +1627,27 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
     <!-- Admin Topup / Payment Note -->
     <div class="card">
       <div class="card-title">💳 တရားဝင် ငွေသွင်းအကောင့် (KBZPay)</div>
-      <div class="kpay-card">
-        <div class="kpay-badge">🔵 KBZPay တရားဝင် အကောင့်</div>
+      <div class="kpay-card" style="text-align:center;">
+        <div class="kpay-badge">🔵 KBZPay တရားဝင် အကောင့် (KPay Scan)</div>
+        <div class="qr-box">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" alt="KPay QR">
+        </div>
         <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="recKpayName">Daw Noe Noe</b></div>
         <div class="kpay-acc-number" id="recKpayNumber">09123456789</div>
-        <button class="btn-copy-kpay" onclick="copyKPayNumber()">
+        <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.kpay.number, 'KPay နံပါတ် ကူးယူပြီးပါပြီ!')">
+          <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
+        </button>
+      </div>
+
+      <!-- PromptPay Card in Records -->
+      <div class="promptpay-card" style="text-align:center;">
+        <div class="promptpay-badge">🇹🇭 PromptPay တရားဝင် အကောင့် (Prove Pay Scan)</div>
+        <div class="qr-box">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0987654321" alt="PromptPay QR">
+        </div>
+        <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="recPromptpayName">Noe Noe</b></div>
+        <div class="kpay-acc-number" style="color:#00e5ff;" id="recPromptpayNumber">0987654321</div>
+        <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.promptpay.number, 'PromptPay နံပါတ် ကူးယူပြီးပါပြီ!')">
           <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
         </button>
       </div>
@@ -1570,26 +1678,52 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
     </div>
   </nav>
 
-  <!-- ================= DEPOSIT MODAL (SLIDE UP) ================= -->
+    <!-- ================= DEPOSIT MODAL (SLIDE UP) ================= -->
   <div class="modal-overlay" id="depositModal">
     <div class="modal-sheet">
       <div class="modal-header">
-        <div class="modal-title">💳 KBZPay (KPay) ဖြင့် ငွေဖြည့်သွင်းခြင်း</div>
+        <div class="modal-title">💳 ငွေဖြည့်သွင်းရန် QR Scan & အကောင့်များ</div>
         <button class="modal-close" onclick="closeDepositModal()">✕</button>
       </div>
 
-      <!-- KPay Info Card -->
-      <div class="kpay-card">
-        <div class="kpay-badge">🔵 KBZPay (KPay) Official</div>
-        <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalKpayName">Daw Noe Noe</b></div>
-        <div class="kpay-acc-number" id="modalKpayNumber">09123456789</div>
-        <button class="btn-copy-kpay" id="btnModalCopy" onclick="copyKPayNumber()">
-          <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
-        </button>
+      <!-- Payment Method Switcher Tabs -->
+      <div class="segmented-control" style="margin-bottom:12px;">
+        <button class="seg-btn active" id="btnDepTabKpay" onclick="switchDepPayTab('kpay')">🔵 KBZPay (KPay Scan)</button>
+        <button class="seg-btn" id="btnDepTabPromptpay" onclick="switchDepPayTab('promptpay')">🇹🇭 PromptPay (Prove Pay)</button>
+      </div>
+
+      <!-- KPay Panel -->
+      <div id="panelDepKpay">
+        <div class="kpay-card" style="text-align:center;">
+          <div class="kpay-badge">🔵 KBZPay (KPay Scan) Official</div>
+          <div class="qr-box">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" alt="KPay QR" id="modalKpayQr">
+          </div>
+          <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalKpayName">Daw Noe Noe</b></div>
+          <div class="kpay-acc-number" id="modalKpayNumber">09123456789</div>
+          <button class="btn-copy-kpay" id="btnModalCopy" onclick="copyText(paymentAccounts.kpay.number, 'KPay နံပါတ် ကူးယူပြီးပါပြီ!')">
+            <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
+          </button>
+        </div>
+      </div>
+
+      <!-- PromptPay Panel -->
+      <div id="panelDepPromptpay" style="display:none;">
+        <div class="promptpay-card" style="text-align:center;">
+          <div class="promptpay-badge">🇹🇭 PromptPay (Prove Pay Scan) Official</div>
+          <div class="qr-box">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0987654321" alt="PromptPay QR" id="modalPromptpayQr">
+          </div>
+          <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalPromptpayName">Noe Noe</b></div>
+          <div class="kpay-acc-number" style="color:#00e5ff;" id="modalPromptpayNumber">0987654321</div>
+          <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.promptpay.number, 'PromptPay နံပါတ် ကူးယူပြီးပါပြီ!')">
+            <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
+          </button>
+        </div>
       </div>
 
       <div style="font-size:11px; color:var(--text-sub); margin-bottom:12px; background:var(--bg-subtle); padding:8px 10px; border-radius:8px;">
-        💡 အထက်ပါ KBZPay အကောင့်သို့ ငွေလွှဲပြီးပါက အောက်ပါ Form တွင် ငွေပမာဏ နှင့် ငွေလွှဲအချက်အလက် ဖြည့်သွင်းပေးပါခင်ဗျာ။
+        💡 အထက်ပါ QR သို့မဟုတ် အကောင့်သို့ ငွေလွှဲပြီးပါက အောက်ပါ Form တွင် ငွေပမာဏ နှင့် ငွေလွှဲအချက်အလက် ဖြည့်သွင်းပေးပါခင်ဗျာ။
       </div>
 
       <div class="form-group">
@@ -1644,13 +1778,90 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
     let isMarketOpen = false;
     let userWalletBal = 0;
     let current2dSession = 'မနက်ပိုင်း (12:01 PM)';
+        let current2dCurrency = 'MMK';
+    let current3dCurrency = 'MMK';
+    let userWalletBalMmk = 0;
+    let userWalletBalThb = 0;
+
+    function set2dCurrency(cur) {
+      current2dCurrency = cur;
+      document.getElementById('btnCur2dMmk')?.classList.toggle('active', cur === 'MMK');
+      document.getElementById('btnCur2dThb')?.classList.toggle('active', cur === 'THB');
+      const lbl = document.getElementById('label2dAmount');
+      const input = document.getElementById('input2dAmount');
+      const chips = document.getElementById('chipsRow2d');
+      if (cur === 'MMK') {
+        if (lbl) lbl.innerText = '၆။ တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်) - ပေါက်ကြေး 1:85:';
+        if (input) { input.placeholder = '1000'; input.value = '1000'; }
+        if (chips) {
+          chips.innerHTML = `
+            <button class="chip-btn" onclick="setAmount2d(500)">500</button>
+            <button class="chip-btn" onclick="setAmount2d(1000)">1,000</button>
+            <button class="chip-btn" onclick="setAmount2d(3000)">3,000</button>
+            <button class="chip-btn" onclick="setAmount2d(5000)">5,000</button>
+            <button class="chip-btn" onclick="setAmount2d(10000)">10,000</button>
+          `;
+        }
+      } else {
+        if (lbl) lbl.innerText = '၆။ တစ်ကွက်လျှင် ထိုးငွေ (ဘတ် ฿) - ပေါက်ကြေး 1:80 (5฿ ➔ 400฿ / 10฿ ➔ 800฿):';
+        if (input) { input.placeholder = '10'; input.value = '10'; }
+        if (chips) {
+          chips.innerHTML = `
+            <button class="chip-btn" onclick="setAmount2d(5)">5 ฿</button>
+            <button class="chip-btn" onclick="setAmount2d(10)">10 ฿</button>
+            <button class="chip-btn" onclick="setAmount2d(20)">20 ฿</button>
+            <button class="chip-btn" onclick="setAmount2d(50)">50 ฿</button>
+            <button class="chip-btn" onclick="setAmount2d(100)">100 ฿</button>
+          `;
+        }
+      }
+      update2DPreview();
+    }
+
+    function set3dCurrency(cur) {
+      current3dCurrency = cur;
+      document.getElementById('btnCur3dMmk')?.classList.toggle('active', cur === 'MMK');
+      document.getElementById('btnCur3dThb')?.classList.toggle('active', cur === 'THB');
+      const lbl = document.getElementById('label3dAmount');
+      const input = document.getElementById('input3dAmount');
+      const chips = document.getElementById('chipsRow3d');
+      if (cur === 'MMK') {
+        if (lbl) lbl.innerText = 'တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်) - ပေါက်ကြေး 1:700:';
+        if (input) { input.placeholder = '1000'; input.value = '1000'; }
+        if (chips) {
+          chips.innerHTML = `
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=500">500</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=1000">1,000</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=3000">3,000</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=5000">5,000</button>
+          `;
+        }
+      } else {
+        if (lbl) lbl.innerText = 'တစ်ကွက်လျှင် ထိုးငွေ (ဘတ် ฿) - ပေါက်ကြေး 1:500 (10฿ ➔ 5,000฿):';
+        if (input) { input.placeholder = '10'; input.value = '10'; }
+        if (chips) {
+          chips.innerHTML = `
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=10">10 ฿</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=20">20 ฿</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=50">50 ฿</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=100">100 ฿</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=500">500 ฿</button>
+          `;
+        }
+      }
+    }
+
     let current2dPayMode = 'wallet';
     let current3dPayMode = 'wallet';
     let selectedNumbers = new Set();
 
     let paymentAccounts = {
-      kpay: { id: "kpay", title: "KBZPay (KPay)", name: "Daw Noe Noe", number: "09123456789", icon: "🔵", currency: "MMK" }
+      kpay: { id: "kpay", title: "KBZPay (KPay)", name: "Daw Noe Noe", number: "09123456789", icon: "🔵", currency: "MMK", qr: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" },
+      promptpay: { id: "promptpay", title: "PromptPay (Prove Pay)", name: "Noe Noe", number: "0987654321", icon: "🇹🇭", currency: "THB", qr: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0987654321" }
     };
+    let currentPendingBet = null;
+    let selectedBetPayMethod = 'kpay';
+    let selectedDepPayMethod = 'kpay';
 
     // Navigation Tabs
     function switchDockTab(tabId, el) {
@@ -1680,6 +1891,103 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
     }
 
     // Deposit & Withdraw Modals
+    
+    function copyText(str, successMsg) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(str).then(() => alert(successMsg || 'ကူးယူပြီးပါပြီ!'));
+      } else {
+        prompt('ကူးယူရန်:', str);
+      }
+    }
+
+    function switchBetPayTab(method) {
+      selectedBetPayMethod = method;
+      document.getElementById('btnBetTabKpay')?.classList.toggle('active', method === 'kpay');
+      document.getElementById('btnBetTabPromptpay')?.classList.toggle('active', method === 'promptpay');
+      const pK = document.getElementById('panelBetKpay');
+      const pP = document.getElementById('panelBetPromptpay');
+      if (pK) pK.style.display = (method === 'kpay') ? 'block' : 'none';
+      if (pP) pP.style.display = (method === 'promptpay') ? 'block' : 'none';
+    }
+
+    function switchDepPayTab(method) {
+      selectedDepPayMethod = method;
+      document.getElementById('btnDepTabKpay')?.classList.toggle('active', method === 'kpay');
+      document.getElementById('btnDepTabPromptpay')?.classList.toggle('active', method === 'promptpay');
+      const pK = document.getElementById('panelDepKpay');
+      const pP = document.getElementById('panelDepPromptpay');
+      if (pK) pK.style.display = (method === 'kpay') ? 'block' : 'none';
+      if (pP) pP.style.display = (method === 'promptpay') ? 'block' : 'none';
+    }
+
+    function openBetPayQrModal(bet) {
+      currentPendingBet = bet;
+      const unit = bet.unit || (bet.currency === 'MMK' ? 'ကျပ်' : 'ဘတ် (THB)');
+      document.getElementById('betModalType').innerText = bet.type + ' (' + bet.slot + ')';
+      document.getElementById('betModalNumbers').innerText = bet.numbers.join(', ') + ' (' + bet.numbers.length + ' ကွက်)';
+      document.getElementById('betModalTotal').innerText = bet.total_amount.toLocaleString() + ' ' + unit;
+      document.getElementById('betTxnInput').value = '';
+      if (bet.currency === 'THB') {
+        switchBetPayTab('promptpay');
+      } else {
+        switchBetPayTab('kpay');
+      }
+      document.getElementById('betPayQrModal').classList.add('active');
+    }
+
+    function closeBetPayQrModal() {
+      document.getElementById('betPayQrModal').classList.remove('active');
+      currentPendingBet = null;
+    }
+
+    function confirmBankBetPayment() {
+      if (!currentPendingBet) return;
+      const txn = document.getElementById('betTxnInput').value.trim();
+      if (!txn) {
+        alert("⚠️ ကျေးဇူးပြု၍ ပိုက်ဆံလွှဲပြီးသော လုပ်ငန်းစဉ်အမှတ် (Txn ID သို့မဟုတ် နောက်ဆုံး ၆ လုံး) ထည့်သွင်းပေးပါခင်ဗျာ!");
+        return;
+      }
+
+      const bet = currentPendingBet;
+      const tktId = 'TKT-' + Math.floor(10000 + Math.random() * 90000);
+      const methodName = selectedBetPayMethod === 'promptpay' ? 'PromptPay (Prove Pay)' : 'KBZPay (KPay)';
+
+      const payload = {
+        action: "place_bet",
+        type: bet.type,
+        ticket_id: tktId,
+        slot: bet.slot,
+        currency: bet.currency || "MMK",
+        payment_mode: "bank_qr",
+        payment_method: methodName,
+        txn_id: txn,
+        numbers: bet.numbers,
+        amount_each: bet.amount_each,
+        total_amount: bet.total_amount,
+        user_name: tgUser?.first_name || 'Customer',
+        user_id: tgUser?.id || 0
+      };
+
+      if (tg && tg.sendData) tg.sendData(JSON.stringify(payload));
+
+      closeBetPayQrModal();
+
+      const multBank = (bet.currency === 'THB') ? (bet.type === '3D' ? 500 : 80) : (bet.type === '3D' ? 700 : 85);
+      const winBank = bet.amount_each * multBank;
+      showVoucher(`${bet.type} ထိုးငွေ ပြေစာထွက်ရှိပါပြီ`, tktId, `
+        <b>အမျိုးအစား:</b> ${bet.type} (${bet.slot})<br>
+        <b>ဂဏန်းများ:</b> ${bet.numbers.join(', ')} (${bet.numbers.length} ကွက်)<br>
+        <b>တစ်ကွက်ထိုး:</b> ${bet.amount_each.toLocaleString()} ${bet.unit || "ကျပ်"} (ပေါက်ကြေး: ${winBank.toLocaleString()} ${bet.unit || "ကျပ်"})<br>
+        <b>ငွေပေးချေမှု:</b> 💳 ဘဏ်ငွေ / QR Pay (${methodName})<br>
+        <b>လုပ်ငန်းစဉ်အမှတ်:</b> #${txn}<br>
+        <b>စုစုပေါင်း:</b> <b style="color:var(--primary-blue);">${bet.total_amount.toLocaleString()} ${bet.unit || "ကျပ်"}</b><br>
+        <b>အခြေအနေ:</b> ✅ အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ!
+      `);
+
+      if (bet.type === '2D') clearSelectedNumbers();
+      if (bet.type === '3D') document.getElementById('input3dNumbers').value = '';
+    }
+
     function openDepositModal() {
       document.getElementById('depositModal').classList.add('active');
     }
@@ -1720,10 +2028,12 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       }
 
       const depTicket = 'DEP-' + Math.floor(10000 + Math.random() * 90000);
+      const methodName = selectedDepPayMethod === 'promptpay' ? 'PromptPay (Prove Pay)' : 'KBZPay (KPay)';
       const payload = {
         action: "deposit_request",
         deposit_id: depTicket,
-        method: "kpay",
+        method: selectedDepPayMethod,
+        payment_method: methodName,
         amount: amt,
         currency: "MMK",
         txn_id: txn,
@@ -1826,8 +2136,9 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       const amt = parseInt(document.getElementById('input2dAmount').value) || 0;
       const count = selectedNumbers.size;
       const total = count * amt;
+      const unit = current2dCurrency === 'MMK' ? ' ကျပ်' : ' ဘတ် (฿)';
       document.getElementById('previewCount2d').innerText = count + ' ကွက်';
-      document.getElementById('previewTotal2d').innerText = total.toLocaleString() + ' ကျပ်';
+      document.getElementById('previewTotal2d').innerText = total.toLocaleString() + unit;
     }
 
     function submit2DBet() {
@@ -1848,13 +2159,32 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       }
 
       const total = nums.length * amt;
-      if (current2dPayMode === 'wallet' && userWalletBal < total) {
-        alert(`⚠️ Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!
+      const cur = current2dCurrency;
+      const unit = cur === 'MMK' ? 'ကျပ်' : 'ဘတ်';
+      const bal = cur === 'MMK' ? userWalletBalMmk : userWalletBalThb;
 
-လိုအပ်ငွေ: ${total.toLocaleString()} ကျပ်
-လက်ရှိ လက်ကျန်ငွေ: ${userWalletBal.toLocaleString()} ကျပ်
+      // If Bank / QR Pay mode, open payment & QR modal first!
+      if (current2dPayMode === 'bank_qr') {
+        openBetPayQrModal({
+          type: "2D",
+          slot: current2dSession,
+          numbers: nums,
+          amount_each: amt,
+          total_amount: total,
+          currency: cur,
+          unit: unit
+        });
+        return;
+      }
 
-ကျေးဇူးပြု၍ "ပင်မ" Tab ရှိ + ငွေဖြည့်မည် ဖြင့် KBZPay မှ ငွေအရင် ဖြည့်ပေးပါခင်ဗျာ။`);
+      // If Wallet mode, check balance
+      if (current2dPayMode === 'wallet' && bal < total) {
+        alert(`⚠️ ${cur} Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!
+
+လိုအပ်ငွေ: ${total.toLocaleString()} ${unit}
+လက်ရှိ လက်ကျန်ငွေ: ${bal.toLocaleString()} ${unit}
+
+ကျေးဇူးပြု၍ "ဘဏ်ငွေ / QR Pay" ဖြင့် လွှဲထိုးရန် ရွေးချယ်ပါ (သို့မဟုတ်) ပင်မ Tab ရှိ + ငွေဖြည့်မည် မှ ငွေအရင် ဖြည့်ပေးပါခင်ဗျာ။`);
         return;
       }
 
@@ -1864,7 +2194,7 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
         type: "2D",
         ticket_id: tktId,
         slot: current2dSession,
-        currency: "MMK",
+        currency: cur,
         payment_mode: current2dPayMode,
         numbers: nums,
         amount_each: amt,
@@ -1875,12 +2205,15 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
 
       if (tg && tg.sendData) tg.sendData(JSON.stringify(payload));
 
+      const mult2d = (cur === 'THB') ? 80 : 85;
+      const win2d = amt * mult2d;
       showVoucher("2D ထိုးငွေ ပြေစာထွက်ရှိပါပြီ", tktId, `
         <b>အမျိုးအစား:</b> 2D (${current2dSession})<br>
         <b>ဂဏန်းများ:</b> ${nums.join(', ')} (${nums.length} ကွက်)<br>
-        <b>တစ်ကွက်ထိုး:</b> ${amt.toLocaleString()} ကျပ်<br>
-        <b>ငွေပေးချေမှု:</b> ${current2dPayMode === 'wallet' ? '💼 Wallet မှ နုတ်ယူပြီး' : '🧾 Slip ထုတ်ယူပြီး'}<br>
-        <b>စုစုပေါင်း:</b> <b style="color:var(--primary-blue);">${total.toLocaleString()} ကျပ်</b>
+        <b>တစ်ကွက်ထိုး:</b> ${amt.toLocaleString()} ${unit} (ပေါက်ကြေး: ${win2d.toLocaleString()} ${unit})<br>
+        <b>ငွေကြေး:</b> ${cur === 'MMK' ? '🇲🇲 မြန်မာကျပ် (MMK)' : '🇹🇭 ထိုင်းဘတ် (THB)'}<br>
+        <b>ငွေပေးချေမှု:</b> 💼 ${cur} Wallet မှ နုတ်ယူပြီး<br>
+        <b>စုစုပေါင်း:</b> <b style="color:var(--primary-blue);">${total.toLocaleString()} ${unit}</b>
       `);
       clearSelectedNumbers();
     }
@@ -1907,13 +2240,32 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       }
 
       const total = nums.length * amt;
-      if (current3dPayMode === 'wallet' && userWalletBal < total) {
-        alert(`⚠️ Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!
+      const cur = current3dCurrency;
+      const unit = cur === 'MMK' ? 'ကျပ်' : 'ဘတ်';
+      const bal = cur === 'MMK' ? userWalletBalMmk : userWalletBalThb;
 
-လိုအပ်ငွေ: ${total.toLocaleString()} ကျပ်
-လက်ရှိ လက်ကျန်ငွေ: ${userWalletBal.toLocaleString()} ကျပ်
+      // If Bank / QR Pay mode, open payment & QR modal first!
+      if (current3dPayMode === 'bank_qr') {
+        openBetPayQrModal({
+          type: "3D",
+          slot: "3D (03:30 PM)",
+          numbers: nums,
+          amount_each: amt,
+          total_amount: total,
+          currency: cur,
+          unit: unit
+        });
+        return;
+      }
 
-ကျေးဇူးပြု၍ KBZPay ဖြင့် ငွေအရင်ဖြည့်ပေးပါခင်ဗျာ။`);
+      // If Wallet mode, check balance
+      if (current3dPayMode === 'wallet' && bal < total) {
+        alert(`⚠️ ${cur} Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!
+
+လိုအပ်ငွေ: ${total.toLocaleString()} ${unit}
+လက်ရှိ လက်ကျန်ငွေ: ${bal.toLocaleString()} ${unit}
+
+ကျေးဇူးပြု၍ "ဘဏ်ငွေ / QR Pay" ဖြင့် လွှဲထိုးရန် ရွေးချယ်ပါ (သို့မဟုတ်) KBZPay/PromptPay မှ ငွေအရင် ဖြည့်ပေးပါခင်ဗျာ။`);
         return;
       }
 
@@ -1923,7 +2275,7 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
         type: "3D",
         ticket_id: tktId,
         slot: "3D (03:30 PM)",
-        currency: "MMK",
+        currency: cur,
         payment_mode: current3dPayMode,
         numbers: nums,
         amount_each: amt,
@@ -1934,12 +2286,15 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
 
       if (tg && tg.sendData) tg.sendData(JSON.stringify(payload));
 
+      const mult3d = (cur === 'THB') ? 500 : 700;
+      const win3d = amt * mult3d;
       showVoucher("3D ထိုးငွေ ပြေစာထွက်ရှိပါပြီ", tktId, `
         <b>အမျိုးအစား:</b> 3D (ထိုင်းအစိုးရထီ)<br>
         <b>ဂဏန်းများ:</b> ${nums.join(', ')} (${nums.length} ကွက်)<br>
-        <b>တစ်ကွက်ထိုး:</b> ${amt.toLocaleString()} ကျပ်<br>
-        <b>ငွေပေးချေမှု:</b> ${current3dPayMode === 'wallet' ? '💼 Wallet မှ နုတ်ယူပြီး' : '🧾 Slip ထုတ်ယူပြီး'}<br>
-        <b>စုစုပေါင်း:</b> <b style="color:var(--primary-blue);">${total.toLocaleString()} ကျပ်</b>
+        <b>တစ်ကွက်ထိုး:</b> ${amt.toLocaleString()} ${unit} (ပေါက်ကြေး: ${win3d.toLocaleString()} ${unit})<br>
+        <b>ငွေကြေး:</b> ${cur === 'MMK' ? '🇲🇲 မြန်မာကျပ် (MMK)' : '🇹🇭 ထိုင်းဘတ် (THB)'}<br>
+        <b>ငွေပေးချေမှု:</b> 💼 ${cur} Wallet မှ နုတ်ယူပြီး<br>
+        <b>စုစုပေါင်း:</b> <b style="color:var(--primary-blue);">${total.toLocaleString()} ${unit}</b>
       `);
       document.getElementById('input3dNumbers').value = '';
     }
@@ -2010,7 +2365,31 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
       ctx.stroke();
     }
 
+    function checkDailySpin() {
+      const uid = tgUser?.id || 'guest';
+      const today = new Date().toISOString().slice(0, 10);
+      const spinKey = 'lucky_spin_' + uid + '_' + today;
+      if (localStorage.getItem(spinKey) === 'done') {
+        const btn = document.getElementById('btnSpinWheel');
+        if (btn) {
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+          btn.innerHTML = '<span>🔒</span> ယနေ့ ကံစမ်းခွင့် သုံးပြီးပါပြီ';
+        }
+        document.getElementById('wheelResultText').innerHTML = '⚠️ <b>သင်သည် ယနေ့အတွက် ကံစမ်းမဲ လှည့်ခွင့် (၁) ကြိမ် အသုံးပြုပြီးပါပြီ!</b><br><span style="font-size:11px; color:var(--text-sub);">မနက်ဖြန်တွင် ထပ်မံ ကံစမ်းနိုင်ပါသည်ခင်ဗျာ။</span>';
+      }
+    }
+
     function spinLuckyWheel() {
+      const uid = tgUser?.id || 'guest';
+      const today = new Date().toISOString().slice(0, 10);
+      const spinKey = 'lucky_spin_' + uid + '_' + today;
+
+      if (localStorage.getItem(spinKey) === 'done') {
+        alert("⚠️ သင်သည် ယနေ့အတွက် ကံစမ်းခွင့် (၁) ကြိမ် အသုံးပြုပြီးပါပြီခင်ဗျာ!");
+        return;
+      }
+
       if (isSpinning) return;
       isSpinning = true;
       document.getElementById('wheelResultText').innerText = "ဘီးလည်နေပါသည်... စောင့်ဆိုင်းပေးပါ!";
@@ -2026,6 +2405,7 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
         const easeOut = 1 - Math.pow(1 - progress, 3);
         wheelAngle = targetAngle * easeOut;
         drawWheel();
+    checkDailySpin();
 
         if (progress < 1) {
           requestAnimationFrame(animate);
@@ -2035,7 +2415,14 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
           const normalized = (2 * Math.PI - (wheelAngle % (2 * Math.PI))) % (2 * Math.PI);
           const idx = Math.floor(normalized / arc);
           const prize = wheelSegments[idx];
-          document.getElementById('wheelResultText').innerHTML = `🎉 ဂုဏ်ယူပါသည်! သင်သည် <b>${prize.text}</b> ရရှိပါသည်!`;
+          localStorage.setItem(spinKey, 'done');
+          document.getElementById('wheelResultText').innerHTML = `🎉 ဂုဏ်ယူပါသည်! သင်သည် <b>${prize.text}</b> ရရှိပါသည်!<br><span style="font-size:11px; color:var(--text-sub);">ယနေ့အတွက် ကံစမ်းခွင့် (၁) ကြိမ် ကုန်ဆုံးသွားပါပြီ။</span>`;
+          const btn = document.getElementById('btnSpinWheel');
+          if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.innerHTML = '<span>🔒</span> ယနေ့ ကံစမ်းခွင့် သုံးပြီးပါပြီ';
+          }
         }
       }
       requestAnimationFrame(animate);
@@ -2049,19 +2436,55 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
         if (!res.ok) return;
         const d = await res.json();
 
-        // Balance
+        // Balance (MMK & THB)
         if (d.user_balance) {
-          userWalletBal = d.user_balance.mmk || 0;
-          document.getElementById('homeBalanceDisplay').innerText = userWalletBal.toLocaleString();
+          userWalletBalMmk = d.user_balance.mmk || 0;
+          userWalletBalThb = d.user_balance.thb || 0;
+          const elMmk = document.getElementById('homeBalanceMmk');
+          if (elMmk) elMmk.innerText = userWalletBalMmk.toLocaleString();
+          const elThb = document.getElementById('homeBalanceThb');
+          if (elThb) elThb.innerText = userWalletBalThb.toLocaleString();
         }
 
-        // KPay details
-        if (d.payment_accounts?.kpay) {
-          paymentAccounts.kpay = d.payment_accounts.kpay;
-          document.getElementById('modalKpayName').innerText = paymentAccounts.kpay.name;
-          document.getElementById('modalKpayNumber').innerText = paymentAccounts.kpay.number;
-          document.getElementById('recKpayName').innerText = paymentAccounts.kpay.name;
-          document.getElementById('recKpayNumber').innerText = paymentAccounts.kpay.number;
+        // Payment Accounts (KPay & PromptPay)
+        if (d.payment_accounts) {
+          if (d.payment_accounts.kpay) {
+            paymentAccounts.kpay = d.payment_accounts.kpay;
+            const kname = paymentAccounts.kpay.name;
+            const knum = paymentAccounts.kpay.number;
+            const kqr = paymentAccounts.kpay.qr || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${knum}`;
+            ['modalKpayName', 'betKpayName', 'recKpayName'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.innerText = kname;
+            });
+            ['modalKpayNumber', 'betKpayNum', 'recKpayNumber'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.innerText = knum;
+            });
+            ['modalKpayQr', 'betQrKpayImg'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.src = kqr;
+            });
+          }
+
+          if (d.payment_accounts.promptpay) {
+            paymentAccounts.promptpay = d.payment_accounts.promptpay;
+            const pname = paymentAccounts.promptpay.name;
+            const pnum = paymentAccounts.promptpay.number;
+            const pqr = paymentAccounts.promptpay.qr || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${pnum}`;
+            ['modalPromptpayName', 'betPromptpayName', 'recPromptpayName'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.innerText = pname;
+            });
+            ['modalPromptpayNumber', 'betPromptpayNum', 'recPromptpayNumber'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.innerText = pnum;
+            });
+            ['modalPromptpayQr', 'betQrPromptpayImg'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.src = pqr;
+            });
+          }
         }
 
         // 2D Live
@@ -2118,6 +2541,7 @@ EMBEDDED_MINIAPP_HTML = r"""<!DOCTYPE html>
     // Init
     init2DGrid();
     drawWheel();
+    checkDailySpin();
     fetchRealtimeData();
     setInterval(fetchRealtimeData, 4000);
   </script>
@@ -2216,14 +2640,15 @@ threading.Thread(target=start_server, daemon=True).start()
 # Background Keep-Alive Thread to prevent Render Free Sleep
 def keep_alive_worker():
     time.sleep(30)
+    target_url = f"{RENDER_EXTERNAL_URL}/health" if RENDER_EXTERNAL_URL else "http://127.0.0.1:10000/health"
     while True:
         try:
-            req = urllib.request.Request("http://127.0.0.1:10000/health", headers={"User-Agent": "SelfKeepAlive"})
-            with urllib.request.urlopen(req, timeout=5) as res:
+            req = urllib.request.Request(target_url, headers={"User-Agent": "SelfKeepAlive"})
+            with urllib.request.urlopen(req, timeout=10) as res:
                 pass
         except Exception:
             pass
-        time.sleep(300) # Ping every 5 minutes
+        time.sleep(480) # Ping every 8 minutes (keeps Render awake before 15m sleep limit)
 
 threading.Thread(target=keep_alive_worker, daemon=True).start()
 
@@ -2243,8 +2668,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🎰 *Lucky2D3D Official Bot မှ ကြိုဆိုပါသည်!*\n\n"
         "📱 အောက်ရှိ **'🎯 ထိုးမယ်'** ခလုတ်ကို နှိပ်၍ ဂဏန်းရွေးချယ်မှု၊ Live ကြည့်ရှုမှု နှင့် ငွေဖြည့်စနစ်များကို အလွယ်တကူ အသုံးပြုနိုင်ပါသည်ခင်ဗျာ!\n\n"
         "💡 *ပေါက်ကြေးများ:*\n"
-        "• 2D (၂လုံး): ၁ ကျပ် ➔ ၈၅ ကျပ် | ၁ ဘတ် ➔ ၉၀ ဘတ်\n"
-        "• 3D (၃လုံး): ၁ ကျပ် ➔ ၇၀၀ ကျပ် | ၁ ဘတ် ➔ ၉၀၀ ဘတ်"
+        "• 2D (၂လုံး): ၁ ကျပ် ➔ ၈၅ ကျပ် | ၅ ဘတ် ➔ ၄၀၀ ဘတ် / ၁၀ ဘတ် ➔ ၈၀၀ ဘတ် (1:80)\n"
+        "• 3D (၃လုံး): ၁ ကျပ် ➔ ၇၀၀ ကျပ် | ၁၀ ဘတ် ➔ ၅,၀၀၀ ဘတ် (1:500)"
     )
 
     main_keyboard = [
@@ -2472,6 +2897,69 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=reply_markup)
         return
 
+    # Check if user is replying with a payment transaction ID for pending text bet
+    if uid in pending_text_bets and pending_text_bets[uid].get("waiting_txn"):
+        p = pending_text_bets.pop(uid)
+        txn_id = text.strip()
+        b_type = p["type"]
+        amt = p["amount"]
+        num_part = p["numbers"][0]
+        tkt = f"TKT-{random.randint(10000, 99999)}"
+        tz_mm = timezone(timedelta(hours=6, minutes=30))
+        now_str = datetime.now(tz_mm).strftime("%d-%m-%Y %I:%M %p")
+        mult = 700 if b_type == "3D" else 85
+
+        if uid not in user_bets:
+            user_bets[uid] = []
+        user_bets[uid].append({
+            "ticket_id": tkt,
+            "type": b_type,
+            "slot": p["slot"],
+            "numbers": [num_part],
+            "amount_each": amt,
+            "total_amount": amt,
+            "date": now_str,
+            "user_name": u_name,
+            "payment_mode": "bank_qr",
+            "txn_id": txn_id,
+            "payment_method": "KPay / PromptPay"
+        })
+        save_json(BETS_FILE, user_bets)
+
+        await update.message.reply_text(
+            f"🧾 *{b_type} ထိုးငွေ ပြေစာထွက်ရှိပါပြီ* 🧾\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔖 *ပြေစာအမှတ်:* `#{tkt}`\n"
+            f"🎯 *ဂဏန်း:* 【 `{num_part}` 】\n"
+            f"💰 *ထိုးငွေ:* `{amt:,} ကျပ်` (ပေါက်ကြေး: `{amt*mult:,} ကျပ်`)\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💳 *ငွေပေးချေမှု:* `💳 ဘဏ်ငွေ / QR Pay (ငွေလွှဲစစ်ဆေးပြီး)`\n"
+            f"📝 *လုပ်ငန်းစဉ်အမှတ်:* `#{txn_id}`\n"
+            f"✅ *အခြေအနေ:* အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ!",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("💬 Admin ထံ ဆက်သွယ်ရန်", url=ADMIN_URL)]
+            ])
+        )
+
+        try:
+            admin_msg = (
+                f"🚨 *[{b_type} စာရိုက်ထိုးငွေ လွှဲပြေစာ အသစ် ရောက်ရှိပါသည်]*\n"
+                f"👤 *ထိုးသူ:* `{u_name}` (ID: `{uid}`)\n"
+                f"🔖 *ပြေစာ:* `#{tkt}`\n"
+                f"🎯 *ဂဏန်း:* `{num_part}` ({b_type})\n"
+                f"💰 *ကျသင့်ငွေ:* `{amt:,} ကျပ်`\n"
+                f"📝 *လုပ်ငန်းစဉ်အမှတ်:* `#{txn_id}`"
+            )
+            kb = InlineKeyboardMarkup([
+                [InlineKeyboardButton("✅ အတည်ပြုမည်", callback_data=f"apprbet_{tkt}_{uid}")],
+                [InlineKeyboardButton("❌ ပယ်ဖျက်မည်", callback_data=f"rejbet_{tkt}_{uid}")]
+            ])
+            await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_msg, parse_mode="Markdown", reply_markup=kb)
+        except Exception:
+            pass
+        return
+
     # Direct Text Bet Parsing (e.g. 12=1000 or 123=500)
     if "=" in text:
         parts = text.split("=")
@@ -2490,49 +2978,244 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     return
 
             b_type = "3D" if is_3d else "2D"
-            tkt = f"TKT-{random.randint(10000, 99999)}"
             rate = "1:700" if is_3d else "1:85"
-            tz_mm = timezone(timedelta(hours=6, minutes=30))
-            now_str = datetime.now(tz_mm).strftime("%d-%m-%Y %I:%M %p")
+            bal = user_balances.get(uid, {}).get("mmk", 0)
 
-            # Save bet
-            if uid not in user_bets:
-                user_bets[uid] = []
-            user_bets[uid].append({
-                "ticket_id": tkt,
+            # Store pending text bet
+            pending_text_bets[uid] = {
                 "type": b_type,
-                "slot": "3D (03:30 PM)" if is_3d else "2D Live",
                 "numbers": [num_part],
-                "amount_each": amt,
-                "total_amount": amt,
-                "date": now_str,
-                "user_name": user.first_name if user else "Customer"
-            })
-            save_json(BETS_FILE, user_bets)
+                "amount": amt,
+                "rate": rate,
+                "slot": "3D (03:30 PM)" if is_3d else "2D Live",
+                "waiting_txn": False
+            }
 
-            await update.message.reply_text(
-                f"🧾 *{b_type} ထိုးငွေ ပြေစာထွက်ရှိပါပြီ* 🧾\n"
+            msg = (
+                f"🎯 *{b_type} ထိုးငွေ ပေးချေမည့် ပုံစံ ရွေးချယ်ပါ* 🎯\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"🔖 *ပြေစာအမှတ်:* `#{tkt}`\n"
                 f"🎯 *ဂဏန်း:* 【 `{num_part}` 】\n"
-                f"💰 *ထိုးငွေ:* `{amt:,} ကျပ်` (ပေါက်ကြေး: {rate})\n"
+                f"💰 *ထိုးကြေး:* `{amt:,} ကျပ်` (ပေါက်ကြေး: {rate})\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"✅ စာရင်းမှတ်တမ်းတင်ပြီးပါပြီ! ငွေလွှဲ Slip အား Admin ထံ ပေးပို့အတည်ပြုပေးပါခင်ဗျာ။",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("💬 Admin ထံ ငွေလွှဲပြေစာ ပို့ရန်", url=ADMIN_URL)]
-                ])
+                f"💵 *သင့် Wallet လက်ကျန်ငွေ:* `{bal:,} ကျပ်`\n\n"
+                f"ကျေးဇူးပြု၍ အောက်ပါ ငွေပေးချေမှု နည်းလမ်းတစ်ခုခုကို ရွေးချယ်ပေးပါခင်ဗျာ:"
             )
+
+            buttons = []
+            if bal >= amt:
+                buttons.append([InlineKeyboardButton(f"💼 Wallet လက်ကျန်ငွေဖြင့် ထိုးမည် ({amt:,} ကျပ်)", callback_data=f"tbet_wallet_{uid}")])
+            buttons.append([InlineKeyboardButton("💳 ဘဏ်ငွေ / KPay / PromptPay QR ဖြင့် လွှဲထိုးမည်", callback_data=f"tbet_bank_{uid}")])
+            if bal < amt:
+                buttons.append([InlineKeyboardButton("💰 Wallet ထဲ အရင် ငွေဖြည့်မည်", callback_data="deposit_info")])
+            buttons.append([InlineKeyboardButton("❌ မထိုးတော့ပါ / ပယ်ဖျက်မည်", callback_data=f"tbet_cancel_{uid}")])
+
+            await update.message.reply_text(msg, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(buttons))
             return
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
+    user = update.effective_user
+    uid = str(user.id) if user else "0"
+    u_name = user.first_name if user else "Customer"
+
+    # Text Bet Wallet Payment Callback
+    if data.startswith("tbet_wallet_"):
+        target_uid = data.split("_")[2]
+        if target_uid != uid or uid not in pending_text_bets:
+            await query.answer("ရွေးချယ်မှု သက်တမ်းကုန်သွားပါပြီခင်ဗျာ!", show_alert=True)
+            return
+
+        p = pending_text_bets.pop(uid)
+        amt = p["amount"]
+        b_type = p["type"]
+        num_part = p["numbers"][0]
+        bal = user_balances.get(uid, {}).get("mmk", 0)
+
+        if bal < amt:
+            await query.answer("Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!", show_alert=True)
+            return
+
+        user_balances[uid]["mmk"] -= amt
+        save_json(BALANCES_FILE, user_balances)
+
+        tkt = f"TKT-{random.randint(10000, 99999)}"
+        tz_mm = timezone(timedelta(hours=6, minutes=30))
+        now_str = datetime.now(tz_mm).strftime("%d-%m-%Y %I:%M %p")
+        mult = 700 if b_type == "3D" else 85
+        rem = user_balances.get(uid, {}).get("mmk", 0)
+
+        if uid not in user_bets:
+            user_bets[uid] = []
+        user_bets[uid].append({
+            "ticket_id": tkt,
+            "type": b_type,
+            "slot": p["slot"],
+            "numbers": [num_part],
+            "amount_each": amt,
+            "total_amount": amt,
+            "date": now_str,
+            "user_name": u_name,
+            "payment_mode": "wallet"
+        })
+        save_json(BETS_FILE, user_bets)
+
+        await query.edit_message_text(
+            f"🧾 *{b_type} ထိုးငွေ ပြေစာထွက်ရှိပါပြီ* 🧾\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔖 *ပြေစာအမှတ်:* `#{tkt}`\n"
+            f"🎯 *ဂဏန်း:* 【 `{num_part}` 】\n"
+            f"💰 *ထိုးငွေ:* `{amt:,} ကျပ်` (ပေါက်ကြေး: `{amt*mult:,} ကျပ်`)\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💳 *ငွေပေးချေမှု:* `💼 Wallet လက်ကျန်ငွေမှ နုတ်ယူပြီး`\n"
+            f"💰 *လက်ကျန်ငွေ:* `{rem:,} ကျပ်`\n"
+            f"✅ *အခြေအနေ:* အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ!",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("💬 Admin ထံ ဆက်သွယ်ရန်", url=ADMIN_URL)]
+            ])
+        )
+        return
+
+    # Text Bet Bank / QR Payment Callback
+    elif data.startswith("tbet_bank_"):
+        target_uid = data.split("_")[2]
+        if target_uid != uid or uid not in pending_text_bets:
+            await query.answer("ရွေးချယ်မှု သက်တမ်းကုန်သွားပါပြီခင်ဗျာ!", show_alert=True)
+            return
+
+        p = pending_text_bets[uid]
+        b_type = p["type"]
+        amt = p["amount"]
+        num_part = p["numbers"][0]
+
+        msg = (
+            f"💳 *{b_type} ထိုးငွေ ပေးချေရန် QR Scan နှင့် အကောင့်များ*\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎯 *ဂဏန်း:* 【 `{num_part}` 】 | 💰 *ကျသင့်ငွေ:* `{amt:,} ကျပ်`\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔵 **KBZPay (KPay Scan):**\n"
+            f"• အကောင့်အမည်: `{PAYMENT_ACCOUNTS['kpay']['Ma Moe Thu zar']}`\n"
+            f"• ဖုန်းနံပါတ်: `{PAYMENT_ACCOUNTS['kpay']['09766646412']}`\n\n"
+            f"🇹🇭 **PromptPay (Prove Pay Scan):**\n"
+            f"• အကောင့်အမည်: `{PAYMENT_ACCOUNTS['promptpay']['MR.AUNG MYAT TUN']}`\n"
+            f"• နံပါတ်: `{PAYMENT_ACCOUNTS['promptpay']['0816404238']}`\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💡 *အသိပေးချက်:* အထက်ပါ QR သို့မဟုတ် အကောင့်သို့ ပိုက်ဆံလွှဲပြီးပါက အောက်ပါ **'✅ ပိုက်ဆံလွှဲပြီးပါပြီ (လုပ်ငန်းစဉ်အမှတ် ပို့မည်)'** ခလုတ်ကို နှိပ်ပြီး လုပ်ငန်းစဉ်အမှတ် နောက်ဆုံး ၆ လုံး ပို့ပေးပါခင်ဗျာ။ စစ်ဆေးပြီးမှသာ တရားဝင် ပြေစာ ထွက်ရှိပါမည်!"
+        )
+        kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("✅ ပိုက်ဆံလွှဲပြီးပါပြီ (လုပ်ငန်းစဉ်အမှတ် ပို့မည်)", callback_data=f"tbet_ready_{uid}")],
+            [InlineKeyboardButton("💬 Admin ထံ တိုက်ရိုက် ဆက်သွယ်မည်", url=ADMIN_URL)],
+            [InlineKeyboardButton("❌ မထိုးတော့ပါ / ပယ်ဖျက်မည်", callback_data=f"tbet_cancel_{uid}")]
+        ])
+        await query.edit_message_text(msg, parse_mode="Markdown", reply_markup=kb)
+        return
+
+    # Text Bet Ready for Txn Callback
+    elif data.startswith("tbet_ready_"):
+        target_uid = data.split("_")[2]
+        if target_uid == uid and uid in pending_text_bets:
+            pending_text_bets[uid]["waiting_txn"] = True
+            await query.edit_message_text(
+                "✍️ *ကျေးဇူးပြု၍ ပိုက်ဆံလွှဲပြီးသော လုပ်ငန်းစဉ်အမှတ် (Txn ID သို့မဟုတ် နောက်ဆုံး ၆ လုံး) ကို စာရိုက်ပို့ပေးပါခင်ဗျာ:*\n\n"
+                "ဥပမာ: `123456` သို့မဟုတ် `09123456789`\n\n"
+                "*(စာရိုက်ပို့လိုက်သည်နှင့် စစ်ဆေးပြီး တရားဝင် ထိုးငွေပြေစာ ထွက်ရှိပါမည်)*",
+                parse_mode="Markdown"
+            )
+        return
+
+    # Text Bet Cancel Callback
+    elif data.startswith("tbet_cancel_"):
+        pending_text_bets.pop(uid, None)
+        await query.edit_message_text("❌ ထိုးငွေတင်သွင်းမှုကို ပယ်ဖျက်လိုက်ပါပြီခင်ဗျာ။")
+        return
 
     if data == "closed_2d_notice":
         is_hol, hol_reason = is_market_holiday()
         await query.answer(f"⛔ ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည် ({hol_reason}) ထိုးလို့မရပါခင်ဗျာ!", show_alert=True)
+        return
+
+    # Admin Deposit Approval
+    elif data.startswith("apprdep_"):
+        if update.effective_user.id != ADMIN_CHAT_ID:
+            await query.answer("Admin သာ အတည်ပြုနိုင်ပါသည်!", show_alert=True)
+            return
+        parts = data.split("_")
+        dep_id = parts[1]
+        target_uid = parts[2]
+        amt = int(parts[3])
+        cur_code = parts[4] if len(parts) > 4 else "mmk"
+        unit = "ဘတ်" if cur_code == "thb" else "ကျပ်"
+
+        if target_uid not in user_balances:
+            user_balances[target_uid] = {"mmk": 0, "thb": 0}
+        user_balances[target_uid][cur_code] = user_balances[target_uid].get(cur_code, 0) + amt
+        save_json(BALANCES_FILE, user_balances)
+
+        await query.edit_message_text(f"✅ ငွေသွင်းပြေစာ `#{dep_id}` အား အတည်ပြုပြီးပါပြီ!\n👤 User: `{target_uid}` ထံသို့ `{amt:,} {unit}` ({cur_code.upper()}) ထည့်သွင်းပြီးပါပြီ။", parse_mode="Markdown")
+        try:
+            await context.bot.send_message(
+                chat_id=int(target_uid),
+                text=f"🎉 *ငွေသွင်းမှု အတည်ပြုပြီးပါပြီ* 🎉\n━━━━━━━━━━━━━━━━━━━━\n🔖 *ပြေစာအမှတ်:* `#{dep_id}`\n💰 *ဖြည့်သွင်းငွေ:* `{amt:,} {unit}` ({cur_code.upper()})\n💼 *လက်ရှိ လက်ကျန်ငွေ:* `{user_balances[target_uid][cur_code]:,} {unit}`\n━━━━━━━━━━━━━━━━━━━━\n👉 '🎯 ထိုးမယ်' ကို နှိပ်၍ စတင် ကံစမ်းနိုင်ပါသည်ခင်ဗျာ!",
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            print("Notify user deposit failed:", e)
+        return
+
+    # Admin Deposit Rejection
+    elif data.startswith("rejdep_"):
+        if update.effective_user.id != ADMIN_CHAT_ID:
+            return
+        parts = data.split("_")
+        dep_id = parts[1]
+        target_uid = parts[2]
+        await query.edit_message_text(f"❌ ငွေသွင်းပြေစာ `#{dep_id}` အား ပယ်ဖျက်လိုက်ပါပြီ။")
+        try:
+            await context.bot.send_message(
+                chat_id=int(target_uid),
+                text=f"❌ *သင့်ငွေသွင်းလွှာ `#{dep_id}` အား စစ်ဆေးချက်အရ ပယ်ဖျက်လိုက်ပါသည်ခင်ဗျာ။*\nအသေးစိတ်အတွက် Admin ထံ တိုက်ရိုက် ဆက်သွယ်စုံစမ်းနိုင်ပါသည်ခင်ဗျာ။",
+                parse_mode="Markdown"
+            )
+        except Exception:
+            pass
+        return
+
+    # Admin Bet Approval
+    elif data.startswith("apprbet_"):
+        if update.effective_user.id != ADMIN_CHAT_ID:
+            return
+        parts = data.split("_")
+        tkt_id = parts[1]
+        target_uid = parts[2]
+        await query.edit_message_text(f"✅ ထိုးငွေပြေစာ `#{tkt_id}` အား အောင်မြင်စွာ အတည်ပြုပြီးပါပြီ!")
+        try:
+            await context.bot.send_message(
+                chat_id=int(target_uid),
+                text=f"✅ *သင့်ထိုးငွေပြေစာ `#{tkt_id}` အား Admin မှ အတည်ပြုလိုက်ပါပြီ!*\nထီပေါက်ပါက ဆုငွေကို အလိုအလျောက် သို့မဟုတ် တိုက်ရိုက် ထုတ်ယူနိုင်ပါသည်ခင်ဗျာ။ ကံကောင်းပါစေ!",
+                parse_mode="Markdown"
+            )
+        except Exception:
+            pass
+        return
+
+    # Admin Bet Rejection
+    elif data.startswith("rejbet_"):
+        if update.effective_user.id != ADMIN_CHAT_ID:
+            return
+        parts = data.split("_")
+        tkt_id = parts[1]
+        target_uid = parts[2]
+        await query.edit_message_text(f"❌ ထိုးငွေပြေစာ `#{tkt_id}` အား ပယ်ဖျက်လိုက်ပါပြီ။")
+        try:
+            await context.bot.send_message(
+                chat_id=int(target_uid),
+                text=f"❌ *သင့်ထိုးငွေပြေစာ `#{tkt_id}` အား စစ်ဆေးချက်အရ ပယ်ဖျက်လိုက်ပါသည်ခင်ဗျာ။*\nအသေးစိတ်အတွက် Admin ထံ ဆက်သွယ်စုံစမ်းနိုင်ပါသည်ခင်ဗျာ။",
+                parse_mode="Markdown"
+            )
+        except Exception:
+            pass
         return
 
     # Back to Lotto Menu
@@ -2719,14 +3402,19 @@ async def handle_webapp_data(update: Update, context: ContextTypes.DEFAULT_TYPE)
             dep_id = payload.get("deposit_id", f"DEP-{random.randint(10000, 99999)}")
             amt = int(payload.get("amount", 0))
             txn = payload.get("txn_id", "-")
+            cur = str(payload.get("currency", "MMK")).upper()
+            cur_key = "thb" if cur == "THB" else "mmk"
+            unit = "ဘတ်" if cur == "THB" else "ကျပ်"
+            pay_method = payload.get("payment_method", "KBZPay (KPay)")
 
             await update.effective_message.reply_text(
                 f"🧾 *ငွေသွင်း လျှောက်ထားလွှာ (Deposit Voucher)* 🧾\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
                 f"🔖 *ပြေစာအမှတ်:* `#{dep_id}`\n"
                 f"👤 *အမည်:* `{u_name}` (ID: `{uid}`)\n"
-                f"🔵 *ငွေပေးချေမှု:* `KBZPay (KPay)`\n"
-                f"💰 *ငွေပမာဏ:* `{amt:,} ကျပ်`\n"
+                f"🔵 *ငွေပေးချေမှု:* `{pay_method}`\n"
+                f"💱 *ငွေကြေး:* `{cur}`\n"
+                f"💰 *ငွေပမာဏ:* `{amt:,} {unit}`\n"
                 f"📝 *ငွေလွှဲအချက်အလက်:* `{txn}`\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
                 f"⏳ Admin မှ စစ်ဆေးအတည်ပြုပြီးပါက သင့် Wallet ထဲသို့ ငွေရောက်ရှိပါမည်!",
@@ -2742,11 +3430,12 @@ async def handle_webapp_data(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     f"🚨 *[ငွေသွင်း လျှောက်ထားလွှာ အသစ် ရောက်ရှိပါသည်]*\n"
                     f"👤 *ထိုးသူ:* `{u_name}` (ID: `{uid}`)\n"
                     f"🔖 *ပြေစာ:* `#{dep_id}`\n"
-                    f"💰 *ပမာဏ:* `{amt:,} ကျပ်` (KBZPay)\n"
+                    f"💰 *ပမာဏ:* `{amt:,} {unit}` ({cur})\n"
+                    f"💳 *နည်းလမ်း:* `{pay_method}`\n"
                     f"📝 *ငွေလွှဲအချက်အလက်:* `{txn}`"
                 )
                 kb = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("✅ ငွေသွင်း အတည်ပြုမည်", callback_data=f"apprdep_{dep_id}_{uid}_{amt}")],
+                    [InlineKeyboardButton("✅ ငွေသွင်း အတည်ပြုမည်", callback_data=f"apprdep_{dep_id}_{uid}_{amt}_{cur_key}")],
                     [InlineKeyboardButton("❌ ပယ်ဖျက်မည်", callback_data=f"rejdep_{dep_id}_{uid}")]
                 ])
                 await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_msg, parse_mode="Markdown", reply_markup=kb)
@@ -2761,6 +3450,11 @@ async def handle_webapp_data(update: Update, context: ContextTypes.DEFAULT_TYPE)
             total_amt = int(payload.get("total_amount", 0))
             tkt_id = payload.get("ticket_id", f"TKT-{random.randint(10000, 99999)}")
             pay_mode = payload.get("payment_mode", "wallet")
+            txn_id = payload.get("txn_id", "-")
+            pay_method = payload.get("payment_method", "KPay")
+            currency = str(payload.get("currency", "MMK")).upper()
+            curr_key = "thb" if currency == "THB" else "mmk"
+            curr_unit = "ဘတ်" if currency == "THB" else "ကျပ်"
 
             if b_type == "2D":
                 is_hol, hol_reason = is_market_holiday()
@@ -2771,18 +3465,26 @@ async def handle_webapp_data(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     )
                     return
 
+            if currency == "THB":
+                mult = 500 if b_type == "3D" else 80
+            else:
+                mult = 700 if b_type == "3D" else 85
+
+            pay_label = f"💼 {currency} Wallet လက်ကျန်ငွေမှ နုတ်ယူပြီး"
             if pay_mode == "wallet":
                 bal = user_balances.get(uid, {"mmk": 0, "thb": 0})
-                if bal.get("mmk", 0) < total_amt:
+                if bal.get(curr_key, 0) < total_amt:
                     await update.effective_message.reply_text(
-                        f"❌ *Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!*\n"
-                        f"💰 လိုအပ်ငွေ: `{total_amt:,} ကျပ်` | လက်ရှိ: `{bal.get('mmk', 0):,} ကျပ်`\n\n"
-                        f"💡 'ထိုးမယ်' ရှိ 'ပင်မ' Tab တွင် + ငွေဖြည့်မည် ဖြင့် KBZPay မှ ငွေအရင် ဖြည့်ပေးပါခင်ဗျာ။",
+                        f"❌ *{currency} Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!*\n"
+                        f"💰 လိုအပ်ငွေ: `{total_amt:,} {curr_unit}` | လက်ရှိ: `{bal.get(curr_key, 0):,} {curr_unit}`\n\n"
+                        f"💡 'ထိုးမယ်' ရှိ 'ဘဏ်ငွေ / QR Pay' ဖြင့် တိုက်ရိုက်လွှဲထိုးပါ (သို့မဟုတ်) KBZPay / PromptPay မှ ငွေအရင် ဖြည့်ပေးပါခင်ဗျာ။",
                         parse_mode="Markdown"
                     )
                     return
-                user_balances[uid]["mmk"] -= total_amt
+                user_balances[uid][curr_key] -= total_amt
                 save_json(BALANCES_FILE, user_balances)
+            else:
+                pay_label = f"💳 ဘဏ်ငွေ / QR Pay ({pay_method} ငွေလွှဲစစ်ဆေးပြီး)"
 
             tz_mm = timezone(timedelta(hours=6, minutes=30))
             now_str = datetime.now(tz_mm).strftime("%d-%m-%Y %I:%M %p")
@@ -2794,16 +3496,19 @@ async def handle_webapp_data(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 "ticket_id": tkt_id,
                 "type": b_type,
                 "slot": slot,
+                "currency": currency,
                 "numbers": numbers,
                 "amount_each": amt_each,
                 "total_amount": total_amt,
                 "date": now_str,
-                "user_name": u_name
+                "user_name": u_name,
+                "payment_mode": pay_mode,
+                "txn_id": txn_id,
+                "payment_method": pay_method
             })
             save_json(BETS_FILE, user_bets)
 
-            mult = 700 if b_type == "3D" else 85
-            rem = user_balances.get(uid, {}).get("mmk", 0)
+            rem = user_balances.get(uid, {}).get(curr_key, 0)
             voucher = (
                 f"🧾 *{b_type} ထိုးငွေ ပြေစာထွက်ရှိပါပြီ* 🧾\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -2812,13 +3517,18 @@ async def handle_webapp_data(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 f"⏰ *အချိန်ပိုင်း:* `{slot}`\n"
                 f"🎯 *ဂဏန်းများ:* `{', '.join(map(str, numbers[:10]))}`"
                 f"{'...' if len(numbers)>10 else ''} ({len(numbers)} ကွက်)\n"
-                f"💰 *တစ်ကွက်ထိုး:* `{amt_each:,} ကျပ်` (ပေါက်ကြေး: `{amt_each*mult:,} ကျပ်`)\n"
+                f"💱 *ငွေကြေး:* `{currency}`\n"
+                f"💰 *တစ်ကွက်ထိုး:* `{amt_each:,} {curr_unit}` (ပေါက်ကြေး: `{amt_each*mult:,} {curr_unit}`)\n"
                 f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"💵 *စုစုပေါင်း ကျသင့်ငွေ:* `{total_amt:,} ကျပ်`\n"
-                f"💳 *ငွေပေးချေမှု:* {'💼 Wallet မှ နုတ်ယူပြီး' if pay_mode=='wallet' else '🧾 Slip အတည်ပြုရန်'}\n"
-                f"💰 *ကျန်ငွေ:* `{rem:,} ကျပ်`\n"
-                f"✅ *အခြေအနေ:* အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ!"
+                f"💵 *စုစုပေါင်း ကျသင့်ငွေ:* `{total_amt:,} {curr_unit}`\n"
+                f"💳 *ငွေပေးချေမှု:* `{pay_label}`\n"
             )
+            if pay_mode != "wallet" and txn_id != "-":
+                voucher += f"📝 *လုပ်ငန်းစဉ်အမှတ်:* `#{txn_id}`\n"
+            if pay_mode == "wallet":
+                voucher += f"💰 *လက်ကျန်ငွေ:* `{rem:,} {curr_unit}`\n"
+            voucher += "✅ *အခြေအနေ:* အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ!"
+
             await update.effective_message.reply_text(
                 voucher,
                 parse_mode="Markdown",
@@ -2826,10 +3536,61 @@ async def handle_webapp_data(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     [InlineKeyboardButton("💬 Admin ထံ ဆက်သွယ်ရန်", url=ADMIN_URL)]
                 ])
             )
+
+            # Alert Admin if Bank / QR Pay
+            if pay_mode != "wallet":
+                try:
+                    admin_msg = (
+                        f"🚨 *[2D/3D ထိုးငွေ လွှဲပြေစာ အသစ် ရောက်ရှိပါသည်]*\n"
+                        f"👤 *ထိုးသူ:* `{u_name}` (ID: `{uid}`)\n"
+                        f"🔖 *ပြေစာ:* `#{tkt_id}`\n"
+                        f"🎯 *ဂဏန်း:* `{', '.join(map(str, numbers))}` ({b_type})\n"
+                        f"💰 *ကျသင့်ငွေ:* `{total_amt:,} {curr_unit}` ({currency})\n"
+                        f"💳 *နည်းလမ်း:* `{pay_method}`\n"
+                        f"📝 *လုပ်ငန်းစဉ်အမှတ်:* `#{txn_id}`"
+                    )
+                    kb = InlineKeyboardMarkup([
+                        [InlineKeyboardButton("✅ ထိုးငွေ အတည်ပြုမည်", callback_data=f"apprbet_{tkt_id}_{uid}")],
+                        [InlineKeyboardButton("❌ ပယ်ဖျက်မည်", callback_data=f"rejbet_{tkt_id}_{uid}")]
+                    ])
+                    await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_msg, parse_mode="Markdown", reply_markup=kb)
+                except Exception as e:
+                    print("Admin bet alert failed:", e)
     except Exception as e:
         print("handle_webapp_data err:", e)
 
 # ==================== ADMIN COMMANDS ====================
+async def admin_set_miniapp(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global MINI_APP_URL
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
+    if context.args:
+        new_url = context.args[0].strip().rstrip("/")
+        if not new_url.startswith("http"):
+            await update.message.reply_text("⚠️ ကျေးဇူးပြု၍ တရားဝင် URL ထည့်သွင်းပေးပါ (ဥပမာ: `https://your-app.vercel.app`)", parse_mode="Markdown")
+            return
+        MINI_APP_URL = new_url
+        try:
+            await context.bot.set_chat_menu_button(
+                menu_button=MenuButtonWebApp(text="🎯 ထိုးမယ်", web_app=WebAppInfo(url=MINI_APP_URL))
+            )
+            await update.message.reply_text(
+                f"✅ *Mini App URL အား အောင်မြင်စွာ ပြောင်းလဲသတ်မှတ်ပြီးပါပြီ!*\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"🔗 *လက်ရှိ Link:* `{MINI_APP_URL}`\n"
+                f"🎯 Telegram Menu Button ကိုလည်း အသစ်သို့ အလိုအလျောက် Update ပြုလုပ်ပေးပြီးပါပြီခင်ဗျာ!",
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            await update.message.reply_text(f"URL updated to `{MINI_APP_URL}` but menu button notice: {e}")
+    else:
+        await update.message.reply_text(
+            f"💡 *လက်ရှိ Mini App Link:* `{MINI_APP_URL}`\n\n"
+            f"ပြောင်းလဲရန်: `/setminiapp <URL>`\n"
+            f"ဥပမာ: `/setminiapp https://your-app.vercel.app`",
+            parse_mode="Markdown"
+        )
+
 async def admin_set_3d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
         return
@@ -2850,19 +3611,25 @@ async def admin_topup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) >= 2:
         target_uid = str(context.args[0]).strip()
         amt = int(context.args[1].strip())
+        cur_code = "mmk"
+        if len(context.args) >= 3 and context.args[2].strip().lower() in ["thb", "baht", "ဘတ်"]:
+            cur_code = "thb"
+        unit = "ဘတ်" if cur_code == "thb" else "ကျပ်"
         if target_uid not in user_balances:
             user_balances[target_uid] = {"mmk": 0, "thb": 0}
-        user_balances[target_uid]["mmk"] += amt
+        user_balances[target_uid][cur_code] = user_balances[target_uid].get(cur_code, 0) + amt
         save_json(BALANCES_FILE, user_balances)
-        await update.message.reply_text(f"✅ User ID `{target_uid}` ထံသို့ `{amt:,} ကျပ်` သွင်းပေးပြီးပါပြီ!")
+        await update.message.reply_text(f"✅ User ID `{target_uid}` ထံသို့ `{amt:,} {unit}` ({cur_code.upper()}) သွင်းပေးပြီးပါပြီ!")
         try:
             await context.bot.send_message(
                 chat_id=int(target_uid),
-                text=f"🎉 *သင့် Wallet ထဲသို့ `{amt:,} ကျပ်` ဖြည့်သွင်းမှု အောင်မြင်ပါသည်!*",
+                text=f"🎉 *သင့် Wallet ထဲသို့ `{amt:,} {unit}` ({cur_code.upper()}) ဖြည့်သွင်းမှု အောင်မြင်ပါသည်!*",
                 parse_mode="Markdown"
             )
         except Exception:
             pass
+    else:
+        await update.message.reply_text("💡 အသုံးပြုပုံ: `/topup <UserID> <ပမာဏ> [thb/mmk]`\nဥပမာ: `/topup 7552908613 10000` သို့မဟုတ် `/topup 7552908613 500 thb`", parse_mode="Markdown")
 
 async def on_startup(application):
     try:
@@ -2879,6 +3646,7 @@ if __name__ == "__main__":
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("set3d", admin_set_3d))
+    app.add_handler(CommandHandler("setminiapp", admin_set_miniapp))
     app.add_handler(CommandHandler("topup", admin_topup))
 
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_webapp_data))
