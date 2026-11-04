@@ -64,8 +64,8 @@ PAYMENT_ACCOUNTS = {
     "kpay": {
         "id": "kpay",
         "title": "KBZPay (KPay)",
-        "name": os.environ.get("KPAY_NAME", "Daw Noe Noe"),
-        "number": os.environ.get("KPAY_NUMBER", "09123456789"),
+        "name": os.environ.get("KPAY_NAME", "Ma Moe Thu Zar"),
+        "number": os.environ.get("KPAY_NUMBER", "09766646412"),
         "color": "#1d3557",
         "icon": "🔵",
         "currency": "MMK",
@@ -74,8 +74,8 @@ PAYMENT_ACCOUNTS = {
     "promptpay": {
         "id": "promptpay",
         "title": "PromptPay (Prove Pay)",
-        "name": os.environ.get("PROMPTPAY_NAME", "Noe Noe"),
-        "number": os.environ.get("PROMPTPAY_NUMBER", "0987654321"),
+        "name": os.environ.get("PROMPTPAY_NAME", "MR.AUNG MYAT TUN"),
+        "number": os.environ.get("PROMPTPAY_NUMBER", "0816404238"),
         "color": "#005696",
         "icon": "🇹🇭",
         "currency": "THB",
@@ -2828,8 +2828,8 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = (
             "💬 *Admin နှင့် တိုက်ရိုက်ဆက်သွယ်ရန်* 💬\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
-            f"👤 *Admin Telegram:* @{ADMIN_USERNAME}\n"
-            f"🆔 *Admin ID:* `{ADMIN_CHAT_ID}`\n"
+            f"👤 *Admin Telegram:* @{noenoeslotagency}\n"
+            f"🆔 *Admin ID:* `{9179836236}`\n"
             "⏰ *ဝန်ဆောင်မှု:* ၂၄ နာရီ ပိတ်ရက်မရှိ အမြန်ဆုံး ဝန်ဆောင်မှုပေးပါသည်ခင်ဗျာ။\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "👉 ငွေသွင်း/ငွေထုတ်၊ ထိုးငွေပြေစာ စစ်ဆေးခြင်း၊ ဂိမ်းအကောင့်ဖွင့်ခြင်း များအတွက် အောက်ပါခလုတ်ကို နှိပ်၍ တိုက်ရိုက် ဆက်သွယ်နိုင်ပါသည်:"
