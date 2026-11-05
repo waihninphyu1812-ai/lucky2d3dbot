@@ -1234,10 +1234,10 @@
       <div class="kpay-card" style="text-align:center;">
         <div class="kpay-badge">🔵 KBZPay တရားဝင် အကောင့် (KPay Scan)</div>
         <div class="qr-box">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" alt="KPay QR">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09766646412" alt="KPay QR">
         </div>
-        <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="recKpayName">Daw Noe Noe</b></div>
-        <div class="kpay-acc-number" id="recKpayNumber">09123456789</div>
+        <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="recKpayName">Ma Moe Thu Zar</b></div>
+        <div class="kpay-acc-number" id="recKpayNumber">09766646412</div>
         <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.kpay.number, 'KPay နံပါတ် ကူးယူပြီးပါပြီ!')">
           <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
         </button>
@@ -1247,10 +1247,10 @@
       <div class="promptpay-card" style="text-align:center;">
         <div class="promptpay-badge">🇹🇭 PromptPay တရားဝင် အကောင့် (Prove Pay Scan)</div>
         <div class="qr-box">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0987654321" alt="PromptPay QR">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0816404238" alt="PromptPay QR">
         </div>
-        <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="recPromptpayName">Noe Noe</b></div>
-        <div class="kpay-acc-number" style="color:#00e5ff;" id="recPromptpayNumber">0987654321</div>
+        <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="recPromptpayName">MR.AUNG MYAT TUN</b></div>
+        <div class="kpay-acc-number" style="color:#00e5ff;" id="recPromptpayNumber">0816404238</div>
         <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.promptpay.number, 'PromptPay နံပါတ် ကူးယူပြီးပါပြီ!')">
           <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
         </button>
@@ -1301,10 +1301,10 @@
         <div class="kpay-card" style="text-align:center;">
           <div class="kpay-badge">🔵 KBZPay (KPay Scan) Official</div>
           <div class="qr-box">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" alt="KPay QR" id="modalKpayQr">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09766646412" alt="KPay QR" id="modalKpayQr">
           </div>
-          <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalKpayName">Daw Noe Noe</b></div>
-          <div class="kpay-acc-number" id="modalKpayNumber">09123456789</div>
+          <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalKpayName">Ma Moe Thu Zar</b></div>
+          <div class="kpay-acc-number" id="modalKpayNumber">09766646412</div>
           <button class="btn-copy-kpay" id="btnModalCopy" onclick="copyText(paymentAccounts.kpay.number, 'KPay နံပါတ် ကူးယူပြီးပါပြီ!')">
             <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
           </button>
@@ -1316,10 +1316,10 @@
         <div class="promptpay-card" style="text-align:center;">
           <div class="promptpay-badge">🇹🇭 PromptPay (Prove Pay Scan) Official</div>
           <div class="qr-box">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0987654321" alt="PromptPay QR" id="modalPromptpayQr">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0816404238" alt="PromptPay QR" id="modalPromptpayQr">
           </div>
-          <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalPromptpayName">Noe Noe</b></div>
-          <div class="kpay-acc-number" style="color:#00e5ff;" id="modalPromptpayNumber">0987654321</div>
+          <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalPromptpayName">MR.AUNG MYAT TUN</b></div>
+          <div class="kpay-acc-number" style="color:#00e5ff;" id="modalPromptpayNumber">0816404238</div>
           <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.promptpay.number, 'PromptPay နံပါတ် ကူးယူပြီးပါပြီ!')">
             <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
           </button>
@@ -1460,8 +1460,8 @@
     let selectedNumbers = new Set();
 
     let paymentAccounts = {
-      kpay: { id: "kpay", title: "KBZPay (KPay)", name: "Daw Noe Noe", number: "09123456789", icon: "🔵", currency: "MMK", qr: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09123456789" },
-      promptpay: { id: "promptpay", title: "PromptPay (Prove Pay)", name: "Noe Noe", number: "0987654321", icon: "🇹🇭", currency: "THB", qr: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0987654321" }
+      kpay: { id: "kpay", title: "KBZPay (KPay)", name: "Ma Moe Thu Zar", number: "09766646412", icon: "🔵", currency: "MMK", qr: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09766646412" },
+      promptpay: { id: "promptpay", title: "PromptPay (Prove Pay)", name: "MR.AUNG MYAT TUN", number: "0816404238", icon: "🇹🇭", currency: "THB", qr: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0816404238" }
     };
     let currentPendingBet = null;
     let selectedBetPayMethod = 'kpay';
@@ -1608,7 +1608,7 @@
     }
 
     function copyKPayNumber() {
-      const num = paymentAccounts.kpay?.number || "09123456789";
+      const num = paymentAccounts.kpay?.number || "09766646412";
       if (navigator.clipboard) {
         navigator.clipboard.writeText(num).then(() => {
           alert(`✅ KBZPay နံပါတ် (${num}) အား ကူးယူပြီးပါပြီ!`);
@@ -1971,32 +1971,50 @@
 
     function checkDailySpin() {
       const uid = tgUser?.id || 'guest';
-      const today = new Date().toISOString().slice(0, 10);
-      const spinKey = 'lucky_spin_' + uid + '_' + today;
+      const spinKey = 'lucky_spin_user_' + uid;
       if (localStorage.getItem(spinKey) === 'done') {
         const btn = document.getElementById('btnSpinWheel');
         if (btn) {
           btn.disabled = true;
           btn.style.opacity = '0.5';
-          btn.innerHTML = '<span>🔒</span> ယနေ့ ကံစမ်းခွင့် သုံးပြီးပါပြီ';
+          btn.style.pointerEvents = 'none';
+          btn.innerHTML = '<span>🔒</span> ကံစမ်းခွင့် သုံးပြီးပါပြီ';
         }
-        document.getElementById('wheelResultText').innerHTML = '⚠️ <b>သင်သည် ယနေ့အတွက် ကံစမ်းမဲ လှည့်ခွင့် (၁) ကြိမ် အသုံးပြုပြီးပါပြီ!</b><br><span style="font-size:11px; color:var(--text-sub);">မနက်ဖြန်တွင် ထပ်မံ ကံစမ်းနိုင်ပါသည်ခင်ဗျာ။</span>';
+        const savedVoucher = localStorage.getItem('lucky_spin_voucher_' + uid) || '';
+        document.getElementById('wheelResultText').innerHTML = `
+          <div style="background:rgba(239,68,68,0.1); border:1px solid #ef4444; border-radius:12px; padding:12px; margin-top:10px;">
+            <div style="font-size:14px; font-weight:700; color:#ef4444;">🔒 သင်သည် ကံစမ်းမဲ (၁) ကြိမ် အသုံးပြုပြီးပါပြီ!</div>
+            ${savedVoucher ? `<div style="margin-top:6px; font-size:13px; color:var(--text-main);">🎫 ရရှိခဲ့သော ဆု / ပြေစာ: <b style="color:var(--primary-blue);">${savedVoucher}</b></div>` : ''}
+            <div style="margin-top:8px; font-size:12px; color:#ef4444; font-weight:600; line-height:1.5;">
+              ⚠️ ဆုကြေးငွေ ထုတ်ယူရန် ဤပြေစာနံပါတ်အား Admin ဆီသို့ Screenshot သို့မဟုတ် စာရင်း ပေးပို့ပေးပါခင်ဗျာ!
+            </div>
+            <a href="https://t.me/noenoeslotagency" target="_blank" style="display:inline-block; margin-top:10px; padding:8px 18px; background:#0088cc; color:#fff; border-radius:8px; text-decoration:none; font-weight:700; font-size:12px; box-shadow:0 3px 6px rgba(0,136,204,0.3);">
+              💬 Admin ဆီသို့ ပြေစာ ပို့မည် (@noenoeslotagency)
+            </a>
+          </div>`;
       }
     }
 
     function spinLuckyWheel() {
       const uid = tgUser?.id || 'guest';
-      const today = new Date().toISOString().slice(0, 10);
-      const spinKey = 'lucky_spin_' + uid + '_' + today;
+      const spinKey = 'lucky_spin_user_' + uid;
 
       if (localStorage.getItem(spinKey) === 'done') {
-        alert("⚠️ သင်သည် ယနေ့အတွက် ကံစမ်းခွင့် (၁) ကြိမ် အသုံးပြုပြီးပါပြီခင်ဗျာ!");
+        alert("⚠️ သင်သည် ကံစမ်းခွင့် (၁) ကြိမ် အသုံးပြုပြီးပါပြီခင်ဗျာ!");
         return;
       }
 
       if (isSpinning) return;
       isSpinning = true;
-      document.getElementById('wheelResultText').innerText = "ဘီးလည်နေပါသည်... စောင့်ဆိုင်းပေးပါ!";
+
+      const btn = document.getElementById('btnSpinWheel');
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<span>⏳</span> လည်နေပါသည်...';
+      }
+      document.getElementById('wheelResultText').innerText = "🎰 ဘီးလည်နေပါသည်... စောင့်ဆိုင်းပေးပါ!";
 
       const spinRounds = 5 + Math.random() * 4;
       const targetAngle = wheelAngle + spinRounds * 2 * Math.PI;
@@ -2009,7 +2027,6 @@
         const easeOut = 1 - Math.pow(1 - progress, 3);
         wheelAngle = targetAngle * easeOut;
         drawWheel();
-    checkDailySpin();
 
         if (progress < 1) {
           requestAnimationFrame(animate);
@@ -2019,14 +2036,28 @@
           const normalized = (2 * Math.PI - (wheelAngle % (2 * Math.PI))) % (2 * Math.PI);
           const idx = Math.floor(normalized / arc);
           const prize = wheelSegments[idx];
+
+          const voucherCode = '#SPIN-' + Math.floor(10000 + Math.random() * 90000);
           localStorage.setItem(spinKey, 'done');
-          document.getElementById('wheelResultText').innerHTML = `🎉 ဂုဏ်ယူပါသည်! သင်သည် <b>${prize.text}</b> ရရှိပါသည်!<br><span style="font-size:11px; color:var(--text-sub);">ယနေ့အတွက် ကံစမ်းခွင့် (၁) ကြိမ် ကုန်ဆုံးသွားပါပြီ။</span>`;
-          const btn = document.getElementById('btnSpinWheel');
+          localStorage.setItem('lucky_spin_voucher_' + uid, `${prize.text} (${voucherCode})`);
+
           if (btn) {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.innerHTML = '<span>🔒</span> ယနေ့ ကံစမ်းခွင့် သုံးပြီးပါပြီ';
+            btn.innerHTML = '<span>🔒</span> ကံစမ်းခွင့် သုံးပြီးပါပြီ';
           }
+
+          document.getElementById('wheelResultText').innerHTML = `
+            <div style="background:rgba(16,185,129,0.1); border:1px solid #10b981; border-radius:12px; padding:14px; margin-top:10px; animation: popIn 0.3s ease;">
+              <div style="font-size:16px; font-weight:800; color:#10b981;">🎉 ဂုဏ်ယူပါသည်! သင်သည် ${prize.text} ကံထူးပါသည်!</div>
+              <div style="margin-top:6px; font-size:13px; color:var(--text-main);">
+                🎫 သင်၏ ဆုကြေးပြေစာနံပါတ်: <b style="color:var(--primary-blue); font-family:monospace; font-size:15px;">${voucherCode}</b>
+              </div>
+              <div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.12); border-left:4px solid #ef4444; border-radius:6px; font-size:12px; color:#ef4444; font-weight:700; line-height:1.6; text-align:left;">
+                ⚠️ <b>အရေးကြီးပါသည်:</b> ဆုကြေးငွေ ထုတ်ယူရန် ဤပြေစာနံပါတ်အား Admin ဆီသို့ Screenshot သို့မဟုတ် စာရင်း ပေးပို့ပေးပါခင်ဗျာ!
+              </div>
+              <a href="https://t.me/noenoeslotagency" target="_blank" style="display:inline-block; margin-top:12px; padding:10px 20px; background:#0088cc; color:#fff; border-radius:8px; text-decoration:none; font-weight:800; font-size:13px; box-shadow:0 4px 10px rgba(0,136,204,0.35);">
+                💬 Admin ဆီသို့ ပြေစာ ပို့မည် (@noenoeslotagency)
+              </a>
+            </div>`;
         }
       }
       requestAnimationFrame(animate);
