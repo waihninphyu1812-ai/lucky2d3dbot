@@ -5,21 +5,29 @@ import urllib.error
 from datetime import datetime, timezone, timedelta
 from http.server import BaseHTTPRequestHandler
 
+# KBank လုံးဝမပါဝင်ဘဲ KPay နှင့် PromptPay သီးသန့် အကောင့်များ
 PAYMENT_ACCOUNTS = {
     "kpay": {
-        "name": "Daw Noe Noe",
-        "number": "09123456789",
-        "qr_url": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=09123456789"
+        "id": "kpay",
+        "title": "KBZPay (KPay)",
+        "name": os.environ.get("KPAY_NAME", "Ma Moe Thu Zar"),
+        "number": os.environ.get("KPAY_NUMBER", "09766646412"),
+        "color": "#1d3557",
+        "icon": "🔵",
+        "currency": "MMK",
+        "qr": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={os.environ.get('KPAY_NUMBER', '09766646412')}",
+        "qr_url": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={os.environ.get('KPAY_NUMBER', '09766646412')}"
     },
     "promptpay": {
-        "name": "Noe Noe",
-        "number": "0987654321",
-        "qr_url": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=0987654321"
-    },
-    "kbank": {
-        "name": "Noe Noe",
-        "number": "123-4-56789-0",
-        "qr_url": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=123-4-56789-0"
+        "id": "promptpay",
+        "title": "PromptPay (Prove Pay)",
+        "name": os.environ.get("PROMPTPAY_NAME", "MR.AUNG MYAT TUN"),
+        "number": os.environ.get("PROMPTPAY_NUMBER", "0816404238"),
+        "color": "#005696",
+        "icon": "🇹🇭",
+        "currency": "THB",
+        "qr": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={os.environ.get('PROMPTPAY_NUMBER', '0816404238')}",
+        "qr_url": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={os.environ.get('PROMPTPAY_NUMBER', '0816404238')}"
     }
 }
 
@@ -59,7 +67,7 @@ OFFICIAL_GLO_3D_RESULTS = {
 
 def http_get_json(url, timeout=4):
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        headers = {"User-Agent": "Mozilla/5.0"}
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=timeout) as response:
             if response.status == 200:
