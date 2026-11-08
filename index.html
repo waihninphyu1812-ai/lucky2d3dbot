@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ထိုးမယ်</title>
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-app: #f4f7fc;
+      --bg-card: #ffffff;
+      --bg-subtle: #f8fafc;
+      --border-card: #e2e8f0;
+      --primary-blue: #1e50ff;
+      --primary-blue-dark: #133ecc;
+      --primary-blue-soft: #eef2ff;
+      --text-main: #111827;
+      --text-sub: #64748b;
+      --text-muted: #94a3b8;
+      --green-accent: #10b981;
+      --red-accent: #ef4444;
+      --nav-bg: #ffffff;
+      --nav-border: #e2e8f0;
+      --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.03);
+      --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.05);
+      --card-radius: 18px;
+    }
+
+    /* Dark mode support */
+    body.dark-mode {
+      --bg-app: #0b0f19;
+      --bg-card: #151c2c;
+      --bg-subtle: #1c2438;
+      --border-card: #252f46;
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --nav-bg: #151c2c;
+      --nav-border: #252f46;
+      --primary-blue-soft: rgba(30, 80, 255, 0.15);
+      --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.2);
+      --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', 'Padauk', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 12px 14px 85px 14px;
+      overflow-x: hidden;
+      transition: background-color 0.25s, color 0.25s;
+    }
+
+    /* ================= Top Header ================= */
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 4px 2px;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1e50ff 0%, #60a5fa 100%);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(30, 80, 255, 0.3);
+    }
+
+    .user-meta .greeting {
+      font-size: 11px;
+      color: var(--text-sub);
+      display: block;
+      line-height: 1.2;
+    }
+
+    .user-meta .user-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s, background-color 0.2s;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* ================= Blue Royal Balance Card ================= */
+    .balance-card {
+      background: linear-gradient(135deg, #1e50ff 0%, #0d3cd6 100%);
+      border-radius: var(--card-radius);
+      padding: 18px 20px;
+      color: #ffffff;
+      box-shadow: 0 10px 24px rgba(30, 80, 255, 0.28);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .balance-card::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -20%;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .bal-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .bal-label {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+
+    .bal-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+      opacity: 0.9;
+      text-decoration: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .bal-amount-row {
+      margin-bottom: 16px;
+    }
+
+    .bal-amount {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: inline-block;
+    }
+
+    .bal-unit {
+      font-size: 18px;
+      font-weight: 600;
+      margin-left: 6px;
+      opacity: 0.95;
+    }
+
+    .bal-btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-deposit {
+      background: #ffffff;
+      color: #1e50ff;
+      border: none;
+      border-radius: 25px;
+      padding: 11px 0;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.15s;
+    }
+
+    .btn-deposit:active {
+      transform: scale(0.97);
+    }
+
+    .btn-withdraw {
+      background: rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 25px;
+      padding: 11px 0;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.15s;
+    }
+
+    .btn-withdraw:active {
+      transform: scale(0.97);
+    }
+
+    /* ================= 2D & 3D Bet Cards ================= */
+    .bet-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .bet-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-card);
+      border-radius: var(--card-radius);
+      padding: 16px 14px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s, border-color 0.2s;
+    }
+
+    .bet-card.active-card {
+      border-color: #93c5fd;
+    }
+
+    .bet-card-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .bet-card-sub {
+      font-size: 11px;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    .bet-card-status {
+      font-size: 11px;
+      font-weight: 600;
+      margin: 12px 0 14px 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-closed {
+      color: var(--red-accent);
+    }
+
+    .status-open {
+      color: var(--green-accent);
+    }
+
+    .btn-card-primary {
+      background: var(--primary-blue);
+      color: #ffffff;
+      border: none;
+      border-radius: 20px;
+      padding: 9px 0;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(30, 80, 255, 0.25);
+      transition: transform 0.15s;
+    }
+
+    .btn-card-primary:active {
+      transform: scale(0.96);
+    }
+
+    .btn-card-secondary {
+      background: var(--primary-blue-soft);
+      color: var(--primary-blue);
+      border: 1px solid rgba(30, 80, 255, 0.25);
+      border-radius: 20px;
+      padding: 9px 0;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.15s;
+    }
+
+    .btn-card-secondary:active {
+      transform: scale(0.96);
+    }
+
+    /* ================= Today's Winning Result Box ================= */
+    .today-results-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--card-radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 14px;
+    }
+
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .results-head-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .results-head-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary-blue);
+      cursor: pointer;
+    }
+
+    .results-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+    }
+
+    .results-columns::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 10%;
+      bottom: 10%;
+      width: 1px;
+      background-color: var(--border-card);
+      transform: translateX(-50%);
+    }
+
+    .res-col {
+      text-align: center;
+      padding: 4px 8px;
+    }
+
+    .res-time-label {
+      font-size: 12px;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    .res-number {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 6px 0;
+      letter-spacing: 1px;
+    }
+
+    .res-status-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* ================= Live Ticker Banner ================= */
+    .live-ticker {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* ================= Tab Views Container ================= */
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ================= Cards & General Components ================= */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: var(--card-radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .input-box {
+      width: 100%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-box:focus {
+      border-color: var(--primary-blue);
+      background: var(--bg-card);
+    }
+
+    .chips-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-top: 6px;
+    }
+
+    .chip-btn {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .chip-btn:active {
+      background: var(--primary-blue-soft);
+      border-color: var(--primary-blue);
+      color: var(--primary-blue);
+    }
+
+    /* Segmented Controls */
+    .segmented-control {
+      display: flex;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 3px;
+      gap: 4px;
+    }
+
+    .seg-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 9px 0;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .seg-btn.active {
+      background: var(--bg-card);
+      color: var(--primary-blue);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    /* 2D Number Grid */
+    .grid-10x10 {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .num-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-card);
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .num-cell.selected {
+      background: var(--primary-blue);
+      color: #ffffff;
+      border-color: var(--primary-blue);
+      transform: scale(0.96);
+    }
+
+    /* Primary Submit Button */
+    .btn-submit-main {
+      width: 100%;
+      background: var(--primary-blue);
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(30, 80, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn-submit-main:active {
+      transform: scale(0.98);
+    }
+
+    
+    /* PromptPay Card */
+    .promptpay-card {
+      background: linear-gradient(135deg, #005696 0%, #002244 100%);
+      color: #ffffff;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 10px 0 14px 0;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    .promptpay-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .qr-box {
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 12px;
+      display: inline-block;
+      margin: 8px auto 10px auto;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      border: 1px solid #cbd5e1;
+    }
+    .qr-box img {
+      width: 170px;
+      height: 170px;
+      display: block;
+      border-radius: 6px;
+    }
+    .pay-tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: #e2e8f0;
+      color: var(--text-sub);
+      font-weight: 700;
+      font-size: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pay-tab-btn.active {
+      background: var(--primary-blue);
+      color: #ffffff;
+    }
+
+    /* ================= KPay Deposit Details Card ================= */
+    .kpay-card {
+      background: linear-gradient(135deg, #1b3557 0%, #0d1b2a 100%);
+      color: #ffffff;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 10px 0 14px 0;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+
+    .kpay-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .kpay-acc-number {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #ffd700;
+      margin: 6px 0;
+    }
+
+    .btn-copy-kpay {
+      background: rgba(255,255,255,0.22);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    /* ================= Roulette Lucky Wheel ================= */
+    .wheel-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 20px auto;
+    }
+
+    #wheelCanvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      box-shadow: 0 8px 24px rgba(30, 80, 255, 0.2);
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 24px solid #ef4444;
+      z-index: 10;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    /* ================= Bottom Navigation Dock ================= */
+    .bottom-dock {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: var(--nav-bg);
+      border-top: 1px solid var(--nav-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 100;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .dock-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      height: 100%;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s, transform 0.15s;
+    }
+
+    .dock-item .dock-icon {
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+
+    .dock-item .dock-label {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .dock-item.active {
+      color: var(--primary-blue);
+    }
+
+    .dock-item.active .dock-icon {
+      transform: scale(1.1);
+    }
+
+    /* Modal / Popups */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-sheet {
+      background: var(--bg-card);
+      border-radius: 24px 24px 0 0;
+      width: 100%;
+      max-width: 500px;
+      padding: 22px 18px 30px 18px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-sub);
+    }
+
+    /* Tables */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .history-table th {
+      text-align: left;
+      padding: 8px;
+      color: var(--text-sub);
+      border-bottom: 1px solid var(--border-card);
+      font-weight: 600;
+    }
+
+    .history-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border-card);
+      color: var(--text-main);
+    }
+
+    .num-pill {
+      display: inline-block;
+      background: var(--primary-blue-soft);
+      color: var(--primary-blue);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="top-header">
+    <div class="user-profile">
+      <div class="user-avatar" id="avatarInitial">S</div>
+      <div class="user-meta">
+        <span class="greeting">မင်္ဂလာပါ ခင်ဗျာ</span>
+        <div class="user-name" id="displayUserName">Snowy</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="toggleTheme()" title="အလင်း/အမှောင် ပြောင်းမည်">🌙</button>
+      <button class="icon-btn" onclick="openSupport()" title="Admin ဆက်သွယ်ရန်">🎧</button>
+    </div>
+  </header>
+
+  <!-- ================= TAB 1: ပင်မ (HOME DASHBOARD) ================= -->
+  <main id="tab-home" class="tab-content active">
+
+    <!-- Blue Royal Balance Card (MMK & THB) -->
+    <div class="balance-card">
+      <div class="bal-top-row">
+        <span class="bal-label">ပိုက်ဆံအိတ် လက်ကျန်ငွေ</span>
+        <span class="bal-link" onclick="switchDockTab('records')">ငွေစာရင်း &rarr;</span>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin: 10px 0 14px 0;">
+        <div style="background:rgba(255,255,255,0.14); padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
+          <div style="font-size:11px; opacity:0.85;">🇲🇲 မြန်မာကျပ် (MMK)</div>
+          <div style="font-size:20px; font-weight:800; margin-top:2px;">
+            <span id="homeBalanceMmk">0</span> <span style="font-size:13px; font-weight:600;">Ks</span>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.14); padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2);">
+          <div style="font-size:11px; opacity:0.85;">🇹🇭 ထိုင်းဘတ် (THB)</div>
+          <div style="font-size:20px; font-weight:800; margin-top:2px;">
+            <span id="homeBalanceThb">0</span> <span style="font-size:13px; font-weight:600;">฿</span>
+          </div>
+        </div>
+      </div>
+      <div class="bal-btn-row">
+        <button class="btn-deposit" onclick="openDepositModal()">
+          <span>+</span> ငွေဖြည့်မည်
+        </button>
+        <button class="btn-withdraw" onclick="openWithdrawModal()">
+          <span>&uarr;</span> ငွေထုတ်မည်
+        </button>
+      </div>
+    </div>
+
+    <!-- 2D & 3D Cards Grid -->
+    <div class="bet-grid">
+      <!-- 2D Card -->
+      <div class="bet-card active-card">
+        <div>
+          <div class="bet-card-title">2D</div>
+          <div class="bet-card-sub">00 -- 99</div>
+        </div>
+        <div>
+          <div class="bet-card-status" id="home2dStatusText">
+            <span class="status-closed">●</span> ယနေ့ ပိတ်ရက်
+          </div>
+          <button class="btn-card-primary" onclick="switchDockTab('twod')">
+            ထိုးမည်
+          </button>
+        </div>
+      </div>
+
+      <!-- 3D Card -->
+      <div class="bet-card">
+        <div>
+          <div class="bet-card-title">3D</div>
+          <div class="bet-card-sub">000 -- 999</div>
+        </div>
+        <div>
+          <div class="bet-card-status" id="home3dStatusText">
+            <span class="status-closed">●</span> ပိတ်ထား
+          </div>
+          <button class="btn-card-secondary" onclick="switchDockTab('threed')">
+            ထိုးမည်
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today Winning Numbers Card -->
+    <div class="today-results-card">
+      <div class="results-head">
+        <span class="results-head-title">ယနေ့ ထွက်ဂဏန်း</span>
+        <span class="results-head-link" onclick="switchDockTab('records')">အားလုံး &rarr;</span>
+      </div>
+      <div class="results-columns">
+        <div class="res-col">
+          <div class="res-time-label">မနက် 12:01</div>
+          <div class="res-number" id="homeMorningVal">--</div>
+          <div class="res-status-sub" id="homeMorningSub">စောင့်ဆိုင်း</div>
+        </div>
+        <div class="res-col">
+          <div class="res-time-label">ညနေ 4:30</div>
+          <div class="res-number" id="homeEveningVal">--</div>
+          <div class="res-status-sub" id="homeEveningSub">စောင့်ဆိုင်း</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Market Ticker -->
+    <div class="live-ticker">
+      <div class="pulse-dot"></div>
+      <div>
+        <span style="font-weight:700;">Live SET:</span>
+        <span id="tickerSetVal">--</span> |
+        <span style="font-weight:700;">Value:</span>
+        <span id="tickerValVal">--</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= TAB 2: 2D ထိုးရန် ================= -->
+  <main id="tab-twod" class="tab-content">
+    <div class="card">
+      <div class="card-title">🎯 ၂ လုံးထီ (2D) ထိုးကြေးတင်သွင်းရန်</div>
+
+      <!-- Closed Notice Banner if Holiday -->
+      <div id="holidayBanner2d" style="display:none; background:#fee2e2; border:1px solid #fca5a5; padding:10px; border-radius:12px; margin-bottom:12px; text-align:center; color:#b91c1c; font-size:13px; font-weight:700;">
+        ⛔ ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည် ထိုးလို့မရပါခင်ဗျာ!
+      </div>
+
+      <!-- Session Selection -->
+      <label class="form-label">၁။ အချိန်ပိုင်း ရွေးချယ်ပါ:</label>
+      <div class="segmented-control" id="session2d">
+        <button class="seg-btn active" onclick="set2dSession('မနက်ပိုင်း (12:01 PM)', this)">မနက် 12:01 PM</button>
+        <button class="seg-btn" onclick="set2dSession('ညနေပိုင်း (04:30 PM)', this)">ညနေ 04:30 PM</button>
+      </div>
+
+      <!-- Payment Mode -->
+            <!-- Currency Selection -->
+      <label class="form-label">၂။ ထိုးငွေ ငွေကြေး ရွေးချယ်ပါ:</label>
+      <div class="segmented-control" id="currency2d" style="margin-bottom:12px;">
+        <button class="seg-btn active" id="btnCur2dMmk" onclick="set2dCurrency('MMK')">🇲🇲 မြန်မာကျပ် (ပေါက်: 1:85)</button>
+        <button class="seg-btn" id="btnCur2dThb" onclick="set2dCurrency('THB')">🇹🇭 ထိုင်းဘတ် (ပေါက်: 1:85 - 10฿➔850฿)</button>
+      </div>
+
+      <label class="form-label">၃။ ငွေပေးချေမှု ပုံစံ:</label>
+      <div class="segmented-control" id="payMode2d">
+        <button class="seg-btn active" onclick="set2dPayMode('wallet', this)">💼 Wallet လက်ကျန်ငွေ</button>
+        <button class="seg-btn" onclick="set2dPayMode('bank_qr', this)">💳 ဘဏ်ငွေ / QR Pay (KPay / PromptPay)</button>
+      </div>
+
+      <!-- Number Input -->
+      <div class="form-group" style="margin-top: 12px;">
+        <label class="form-label">၄။ ထိုးလိုသော ဂဏန်းများ (ကော်မာ ခြား၍ ရိုက်ထည့်နိုင်ပါသည်):</label>
+        <input type="text" id="input2dNumbers" class="input-box" placeholder="ဥပမာ: 12, 45, 89 (သို့မဟုတ် ဇယားမှ ရွေးပါ)">
+        <div class="chips-row">
+          <button class="chip-btn" onclick="pickQuickPattern('ပတ်သီး')">ပတ်သီး</button>
+          <button class="chip-btn" onclick="pickQuickPattern('အာပတ်')">အာပတ်</button>
+          <button class="chip-btn" onclick="pickQuickPattern('ပါဝါ')">ပါဝါ (၅ ကွက်)</button>
+          <button class="chip-btn" onclick="pickQuickPattern('နက္ခတ်')">နက္ခတ် (၅ ကွက်)</button>
+          <button class="chip-btn" onclick="pickQuickPattern('ညီကို')">ညီကို</button>
+          <button class="chip-btn" onclick="clearSelectedNumbers()">ဖျက်မည်</button>
+        </div>
+      </div>
+
+      <!-- 10x10 Grid -->
+      <label class="form-label">၅။ ဂဏန်းကွက် ဇယား (နှိပ်၍ ရွေးပါ):</label>
+      <div class="grid-10x10" id="grid2DNumbers"></div>
+
+      <!-- Amount Input -->
+      <div class="form-group" style="margin-top: 14px;">
+        <label class="form-label" id="label2dAmount">၆။ တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်) - ပေါက်ကြေး 1:85:</label>
+        <input type="number" id="input2dAmount" class="input-box" placeholder="1000" value="1000">
+        <div class="chips-row" id="chipsRow2d">
+          <button class="chip-btn" onclick="setAmount2d(500)">500</button>
+          <button class="chip-btn" onclick="setAmount2d(1000)">1,000</button>
+          <button class="chip-btn" onclick="setAmount2d(3000)">3,000</button>
+          <button class="chip-btn" onclick="setAmount2d(5000)">5,000</button>
+          <button class="chip-btn" onclick="setAmount2d(10000)">10,000</button>
+        </div>
+      </div>
+
+      <!-- Total Preview -->
+      <div style="background:var(--bg-subtle); border-radius:12px; padding:12px; margin-top:12px; border:1px solid var(--border-card);">
+        <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-sub);">
+          <span>ရွေးချယ်ထားသော ကွက်ရေ:</span>
+          <b id="previewCount2d" style="color:var(--text-main);">0 ကွက်</b>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:700; margin-top:6px; color:var(--text-main);">
+          <span>ကျသင့်ငွေ စုစုပေါင်း:</span>
+          <span style="color:var(--primary-blue);" id="previewTotal2d">0 ကျပ်</span>
+        </div>
+      </div>
+
+      <button class="btn-submit-main" id="btnSubmit2d" onclick="submit2DBet()">
+        <span>👉</span> 2D ထိုးငွေ အတည်ပြုမည်
+      </button>
+    </div>
+  </main>
+
+  <!-- ================= TAB 3: 3D ထိုးရန် & တရားဝင် ရလဒ် ================= -->
+  <main id="tab-threed" class="tab-content">
+    <!-- Official Thai GLO Card -->
+    <div class="card" style="border-left: 4px solid var(--green-accent);">
+      <div class="card-title">🇹🇭 ထိုင်းအစိုးရ တရားဝင်ထီ (GLO) နောက်ဆုံးထွက် ရလဒ်</div>
+      <div style="font-size:11px; color:#059669; font-weight:700; margin-bottom:4px;" id="gloSourceText">🌐 Thai Government Lottery Office (www.glo.or.th) Real-Time API</div>
+      <div style="font-size:12px; color:var(--text-sub); margin-bottom:8px;" id="gloDrawDate">ရက်စွဲ: တိုက်ရိုက်ရယူနေသည်...</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; text-align:center; background:var(--bg-subtle); padding:12px; border-radius:12px;">
+        <div>
+          <div style="font-size:11px; color:var(--text-sub);">ပထမဆုကြီး (၆ လုံး)</div>
+          <div style="font-size:22px; font-weight:800; color:var(--text-main);" id="gloFirstPrize">--</div>
+        </div>
+        <div>
+          <div style="font-size:11px; color:var(--text-sub);">တရားဝင် 3D အပေါ်</div>
+          <div style="font-size:22px; font-weight:800; color:var(--primary-blue);" id="gloThreeD">--</div>
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--text-sub); margin-top:8px; line-height:1.5;">
+        • 3D အနားဂဏန်းများ: <b id="gloAdjThreed">--</b><br>
+        • ရှေ့ ၃ လုံး: <b id="gloFront3d">--</b> | နောက် ၃ လုံး: <b id="gloBack3d">--</b> | အောက် ၂ လုံး: <b id="gloBack2d">--</b>
+      </div>
+    </div>
+
+        <!-- Official GLO Verification Card -->
+    <div class="card" style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border: 1px solid #bbf7d0;">
+      <div class="card-title" style="color: #047857;">🏛️ Government Lottery Office (GLO) တရားဝင် အချက်အလက်</div>
+      <div style="font-size: 12px; line-height: 1.8; color: #1e293b;">
+        • တရားဝင် ဝဘ်ဆိုဒ်: <a href="https://www.glo.or.th" target="_blank" style="color:#0284c7; font-weight:700;">www.glo.or.th</a><br>
+        • ထီဖွင့်ချိန်: လစဉ် <b>၁ ရက်</b> နှင့် <b>၁၆ ရက်</b> ညနေ ၃:၃၀ နာရီ<br>
+        • 3D အပေါ်: ထိုင်းအစိုးရ ပထမဆုကြီး၏ နောက်ဆုံး <b>၃ လုံး</b><br>
+        • 2D အောက်: ထိုင်းအစိုးရ တရားဝင် <b>အောက် ၂ လုံး</b><br>
+        • ရလဒ်များအားလုံးကို ထိုင်းအစိုးရဆာဗာမှ <b>Real-Time Live API</b> ဖြင့် တိုက်ရိုက် ရယူဖော်ပြပေးပါသည်။
+      </div>
+    </div>
+
+    <!-- 3D Betting Form -->
+    <div class="card">
+      <div class="card-title">🎯 ၃ လုံး (3D) ထိုးကြေး တင်သွင်းရန်</div>
+
+      <!-- Currency Selection 3D -->
+      <label class="form-label">၁။ ထိုးငွေ ငွေကြေး ရွေးချယ်ပါ:</label>
+      <div class="segmented-control" id="currency3d" style="margin-bottom:12px;">
+        <button class="seg-btn active" id="btnCur3dMmk" onclick="set3dCurrency('MMK')">🇲🇲 မြန်မာကျပ် (ပေါက်: 1:700)</button>
+        <button class="seg-btn" id="btnCur3dThb" onclick="set3dCurrency('THB')">🇹🇭 ထိုင်းဘတ် (ပေါက်: 1:500 - 10฿➔5,000฿)</button>
+      </div>
+
+      <label class="form-label">၂။ ငွေပေးချေမှု ပုံစံ:</label>
+      <div class="segmented-control" id="payMode3d">
+        <button class="seg-btn active" onclick="set3dPayMode('wallet', this)">💼 Wallet လက်ကျန်ငွေ</button>
+        <button class="seg-btn" onclick="set3dPayMode('bank_qr', this)">💳 ဘဏ်ငွေ / QR Pay (KPay / PromptPay)</button>
+      </div>
+
+      <div class="form-group" style="margin-top:12px;">
+        <label class="form-label">ထိုးလိုသော ၃ လုံး ဂဏန်း (ကော်မာ ခြား၍ ရိုက်ထည့်ပါ):</label>
+        <input type="text" id="input3dNumbers" class="input-box" placeholder="ဥပမာ: 224, 781, 701">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" id="label3dAmount">တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်) - ပေါက်ကြေး 1:700:</label>
+        <input type="number" id="input3dAmount" class="input-box" placeholder="1000" value="1000">
+        <div class="chips-row" id="chipsRow3d">
+          <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=500">500</button>
+          <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=1000">1,000</button>
+          <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=3000">3,000</button>
+          <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=5000">5,000</button>
+        </div>
+      </div>
+
+      <button class="btn-submit-main" onclick="submit3DBet()">
+        <span>👉</span> 3D ထိုးငွေ အတည်ပြုမည်
+      </button>
+    </div>
+  </main>
+
+  <!-- ================= TAB 4: ရူလက် (LUCKY WHEEL) ================= -->
+  <main id="tab-roulette" class="tab-content">
+    <div class="card" style="text-align:center;">
+      <div class="card-title" style="justify-content:center;">🎁 ကံစမ်းဘီး (Lucky Roulette)</div>
+      <p style="font-size:12px; color:var(--text-sub);">နေ့စဉ် အခမဲ့ ၁ ကြိမ် လှည့်ကာ ဆုငွေများနှင့် 2D အထူးဂဏန်းများ ကံစမ်းနိုင်ပါသည်!</p>
+
+      <div class="wheel-container">
+        <div class="wheel-pointer"></div>
+        <canvas id="wheelCanvas" width="280" height="280"></canvas>
+      </div>
+
+      <button class="btn-submit-main" id="btnSpinWheel" onclick="spinLuckyWheel()">
+        <span>🎰</span> ဘီးစလှည့်မည် (Spin Now)
+      </button>
+      <div id="wheelResultText" style="margin-top:12px; font-weight:700; font-size:14px; color:var(--primary-blue);"></div>
+    </div>
+  </main>
+
+  <!-- ================= TAB 5: မှတ်တမ်း (RECORDS & HISTORY) ================= -->
+  <main id="tab-records" class="tab-content">
+    <div class="card">
+      <div class="card-title">🕒 2D ထွက်ဂဏန်း မှတ်တမ်းများ</div>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>ရက်စွဲ</th>
+            <th>မနက် (12:01)</th>
+            <th>ညနေ (04:30)</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <tr><td>2024-10-29</td><td><span class="num-pill">41</span></td><td><span class="num-pill">20</span></td></tr>
+          <tr><td>2024-10-28</td><td><span class="num-pill">41</span></td><td><span class="num-pill">20</span></td></tr>
+          <tr><td>2024-10-25</td><td><span class="num-pill">78</span></td><td><span class="num-pill">43</span></td></tr>
+          <tr><td>2024-10-24</td><td><span class="num-pill">53</span></td><td><span class="num-pill">98</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3D Official GLO Live Card in Records -->
+    <div class="card" style="border-left: 4px solid var(--primary-blue);">
+      <div class="card-title">🎲 3D တရားဝင် GLO Live တိုက်ရိုက်ရလဒ်</div>
+      <div style="font-size:12px; color:var(--text-sub); margin-bottom:8px;">🌐 Source: Government Lottery Office (<a href="https://www.glo.or.th" target="_blank">www.glo.or.th</a>)</div>
+      <div style="background:var(--bg-subtle); padding:12px; border-radius:12px; font-size:13px; line-height:1.8;">
+        <div>📅 နောက်ဆုံးထွက် ရက်စွဲ: <b id="recGloDate">တိုက်ရိုက်ချိတ်ဆက်နေသည်...</b></div>
+        <div>🏆 ပထမဆုကြီး (၆ လုံး): <b id="recGloFirst">--</b></div>
+        <div>🔴 တရားဝင် 3D အပေါ်: <b id="recGlo3D" style="color:var(--primary-blue); font-size:16px;">--</b></div>
+        <div>🔴 တရားဝင် 2D အောက်: <b id="recGlo2D" style="color:var(--accent-red); font-size:15px;">--</b></div>
+      </div>
+    </div>
+
+    <!-- Admin Topup / Payment Note -->
+    <div class="card">
+      <div class="card-title">💳 တရားဝင် ငွေသွင်းအကောင့် (KBZPay)</div>
+      <div class="kpay-card" style="text-align:center;">
+        <div class="kpay-badge">🔵 KBZPay တရားဝင် အကောင့် (KPay Scan)</div>
+        <div class="qr-box">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09766646412" alt="KPay QR">
+        </div>
+        <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="recKpayName">Ma Moe Thu Zar</b></div>
+        <div class="kpay-acc-number" id="recKpayNumber">09766646412</div>
+        <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.kpay.number, 'KPay နံပါတ် ကူးယူပြီးပါပြီ!')">
+          <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
+        </button>
+      </div>
+
+      <!-- PromptPay Card in Records -->
+      <div class="promptpay-card" style="text-align:center;">
+        <div class="promptpay-badge">🇹🇭 PromptPay တရားဝင် အကောင့် (Prove Pay Scan)</div>
+        <div class="qr-box">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0816404238" alt="PromptPay QR">
+        </div>
+        <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="recPromptpayName">MR.AUNG MYAT TUN</b></div>
+        <div class="kpay-acc-number" style="color:#00e5ff;" id="recPromptpayNumber">0816404238</div>
+        <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.promptpay.number, 'PromptPay နံပါတ် ကူးယူပြီးပါပြီ!')">
+          <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= BOTTOM NAVIGATION DOCK (5 TABS) ================= -->
+  <nav class="bottom-dock">
+    <div class="dock-item active" onclick="switchDockTab('home', this)">
+      <div class="dock-icon">🏠</div>
+      <div class="dock-label">ပင်မ</div>
+    </div>
+    <div class="dock-item" onclick="switchDockTab('twod', this)">
+      <div class="dock-icon">🔲</div>
+      <div class="dock-label">2D</div>
+    </div>
+    <div class="dock-item" onclick="switchDockTab('threed', this)">
+      <div class="dock-icon">🎲</div>
+      <div class="dock-label">3D</div>
+    </div>
+    <div class="dock-item" onclick="switchDockTab('roulette', this)">
+      <div class="dock-icon">🎁</div>
+      <div class="dock-label">ရူလက်</div>
+    </div>
+    <div class="dock-item" onclick="switchDockTab('records', this)">
+      <div class="dock-icon">🕒</div>
+      <div class="dock-label">မှတ်တမ်း</div>
+    </div>
+  </nav>
+
+    <!-- ================= DEPOSIT MODAL (SLIDE UP) ================= -->
+  <div class="modal-overlay" id="depositModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">💳 ငွေဖြည့်သွင်းရန် QR Scan & အကောင့်များ</div>
+        <button class="modal-close" onclick="closeDepositModal()">✕</button>
+      </div>
+
+      <!-- Payment Method Switcher Tabs -->
+      <div class="segmented-control" style="margin-bottom:12px;">
+        <button class="seg-btn active" id="btnDepTabKpay" onclick="switchDepPayTab('kpay')">🔵 KBZPay (KPay Scan)</button>
+        <button class="seg-btn" id="btnDepTabPromptpay" onclick="switchDepPayTab('promptpay')">🇹🇭 PromptPay (Prove Pay)</button>
+      </div>
+
+      <!-- KPay Panel -->
+      <div id="panelDepKpay">
+        <div class="kpay-card" style="text-align:center;">
+          <div class="kpay-badge">🔵 KBZPay (KPay Scan) Official</div>
+          <div class="qr-box">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09766646412" alt="KPay QR" id="modalKpayQr">
+          </div>
+          <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalKpayName">Ma Moe Thu Zar</b></div>
+          <div class="kpay-acc-number" id="modalKpayNumber">09766646412</div>
+          <button class="btn-copy-kpay" id="btnModalCopy" onclick="copyText(paymentAccounts.kpay.number, 'KPay နံပါတ် ကူးယူပြီးပါပြီ!')">
+            <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
+          </button>
+        </div>
+      </div>
+
+      <!-- PromptPay Panel -->
+      <div id="panelDepPromptpay" style="display:none;">
+        <div class="promptpay-card" style="text-align:center;">
+          <div class="promptpay-badge">🇹🇭 PromptPay (Prove Pay Scan) Official</div>
+          <div class="qr-box">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0816404238" alt="PromptPay QR" id="modalPromptpayQr">
+          </div>
+          <div style="font-size:12px; opacity:0.9;">အကောင့်အမည်: <b id="modalPromptpayName">MR.AUNG MYAT TUN</b></div>
+          <div class="kpay-acc-number" style="color:#00e5ff;" id="modalPromptpayNumber">0816404238</div>
+          <button class="btn-copy-kpay" onclick="copyText(paymentAccounts.promptpay.number, 'PromptPay နံပါတ် ကူးယူပြီးပါပြီ!')">
+            <span>📋</span> နံပါတ်ကူးယူမည် (Copy)
+          </button>
+        </div>
+      </div>
+
+      <div style="font-size:11px; color:var(--text-sub); margin-bottom:12px; background:var(--bg-subtle); padding:8px 10px; border-radius:8px;">
+        💡 အထက်ပါ QR သို့မဟုတ် အကောင့်သို့ ငွေလွှဲပြီးပါက အောက်ပါ Form တွင် ငွေပမာဏ နှင့် ငွေလွှဲအချက်အလက် ဖြည့်သွင်းပေးပါခင်ဗျာ။
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ဖြည့်သွင်းမည့် ငွေပမာဏ (ကျပ်):</label>
+        <input type="number" id="depAmountInput" class="input-box" value="10000">
+        <div class="chips-row">
+          <button class="chip-btn" onclick="document.getElementById('depAmountInput').value=5000">+5,000</button>
+          <button class="chip-btn" onclick="document.getElementById('depAmountInput').value=10000">+10,000</button>
+          <button class="chip-btn" onclick="document.getElementById('depAmountInput').value=20000">+20,000</button>
+          <button class="chip-btn" onclick="document.getElementById('depAmountInput').value=50000">+50,000</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ငွေလွှဲသူ ဖုန်းနံပါတ် (သို့မဟုတ် နောက်ဆုံး ၆ လုံး):</label>
+        <input type="text" id="depTxnInput" class="input-box" placeholder="09xxxxxxxxx သို့မဟုတ် 123456">
+      </div>
+
+      <button class="btn-submit-main" onclick="submitDepositForm()">
+        <span>💳</span> ငွေဖြည့်လွှာ တင်မည်
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= VOUCHER MODAL ================= -->
+  <div class="modal-overlay" id="voucherModal">
+    <div class="modal-sheet" style="text-align:center;">
+      <div style="font-size:36px; margin-bottom:6px;">🧾</div>
+      <div class="modal-title" id="voucherTitle">ထိုးငွေပြေစာ အတည်ပြုပြီးပါပြီ</div>
+      <div id="voucherTicketId" style="font-size:13px; color:var(--primary-blue); font-weight:700; margin:4px 0 14px 0;">#TKT-00000</div>
+      <div id="voucherContent" style="background:var(--bg-subtle); padding:14px; border-radius:12px; font-size:12px; text-align:left; line-height:1.7; border:1px solid var(--border-card);"></div>
+      <button class="btn-submit-main" onclick="closeVoucherModal()">နားလည်ပါပြီ</button>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    const tgUser = tg?.initDataUnsafe?.user;
+    if (tgUser) {
+      const uName = tgUser.first_name || tgUser.username || "Customer";
+      document.getElementById('displayUserName').innerText = uName;
+      document.getElementById('avatarInitial').innerText = uName.charAt(0).toUpperCase();
+    }
+
+    // App State
+    let isMarketOpen = false;
+    let userWalletBal = 0;
+    let current2dSession = 'မနက်ပိုင်း (12:01 PM)';
+        let current2dCurrency = 'MMK';
+    let current3dCurrency = 'MMK';
+    let userWalletBalMmk = 0;
+    let userWalletBalThb = 0;
+
+    function set2dCurrency(cur) {
+      current2dCurrency = cur;
+      document.getElementById('btnCur2dMmk')?.classList.toggle('active', cur === 'MMK');
+      document.getElementById('btnCur2dThb')?.classList.toggle('active', cur === 'THB');
+      const lbl = document.getElementById('label2dAmount');
+      const input = document.getElementById('input2dAmount');
+      const chips = document.getElementById('chipsRow2d');
+      if (cur === 'MMK') {
+        if (lbl) lbl.innerText = '၆။ တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်) - ပေါက်ကြေး 1:85:';
+        if (input) { input.placeholder = '1000'; input.value = '1000'; }
+        if (chips) {
+          chips.innerHTML = `
+            <button class="chip-btn" onclick="setAmount2d(500)">500</button>
+            <button class="chip-btn" onclick="setAmount2d(1000)">1,000</button>
+            <button class="chip-btn" onclick="setAmount2d(3000)">3,000</button>
+            <button class="chip-btn" onclick="setAmount2d(5000)">5,000</button>
+            <button class="chip-btn" onclick="setAmount2d(10000)">10,000</button>
+          `;
+        }
+      } else {
+        if (lbl) lbl.innerText = '၆။ တစ်ကွက်လျှင် ထိုးငွေ (ဘတ် ฿) - ပေါက်ကြေး 1:85 (10฿ ➔ 850฿):';
+        if (input) { input.placeholder = '10'; input.value = '10'; }
+        if (chips) {
+          chips.innerHTML = `
+            <button class="chip-btn" onclick="setAmount2d(5)">5 ฿</button>
+            <button class="chip-btn" onclick="setAmount2d(10)">10 ฿</button>
+            <button class="chip-btn" onclick="setAmount2d(20)">20 ฿</button>
+            <button class="chip-btn" onclick="setAmount2d(50)">50 ฿</button>
+            <button class="chip-btn" onclick="setAmount2d(100)">100 ฿</button>
+          `;
+        }
+      }
+      update2DPreview();
+    }
+
+    function set3dCurrency(cur) {
+      current3dCurrency = cur;
+      document.getElementById('btnCur3dMmk')?.classList.toggle('active', cur === 'MMK');
+      document.getElementById('btnCur3dThb')?.classList.toggle('active', cur === 'THB');
+      const lbl = document.getElementById('label3dAmount');
+      const input = document.getElementById('input3dAmount');
+      const chips = document.getElementById('chipsRow3d');
+      if (cur === 'MMK') {
+        if (lbl) lbl.innerText = 'တစ်ကွက်လျှင် ထိုးငွေ (ကျပ်) - ပေါက်ကြေး 1:700:';
+        if (input) { input.placeholder = '1000'; input.value = '1000'; }
+        if (chips) {
+          chips.innerHTML = `
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=500">500</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=1000">1,000</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=3000">3,000</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=5000">5,000</button>
+          `;
+        }
+      } else {
+        if (lbl) lbl.innerText = 'တစ်ကွက်လျှင် ထိုးငွေ (ဘတ် ฿) - ပေါက်ကြေး 1:500 (10฿ ➔ 5,000฿):';
+        if (input) { input.placeholder = '10'; input.value = '10'; }
+        if (chips) {
+          chips.innerHTML = `
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=10">10 ฿</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=20">20 ฿</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=50">50 ฿</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=100">100 ฿</button>
+            <button class="chip-btn" onclick="document.getElementById('input3dAmount').value=500">500 ฿</button>
+          `;
+        }
+      }
+    }
+
+    let current2dPayMode = 'wallet';
+    let current3dPayMode = 'wallet';
+    let selectedNumbers = new Set();
+
+    let paymentAccounts = {
+      kpay: { id: "kpay", title: "KBZPay (KPay)", name: "Ma Moe Thu Zar", number: "09766646412", icon: "🔵", currency: "MMK", qr: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=09766646412" },
+      promptpay: { id: "promptpay", title: "PromptPay (Prove Pay)", name: "MR.AUNG MYAT TUN", number: "0816404238", icon: "🇹🇭", currency: "THB", qr: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=0816404238" }
+    };
+    let currentPendingBet = null;
+    let selectedBetPayMethod = 'kpay';
+    let selectedDepPayMethod = 'kpay';
+
+    // Navigation Tabs
+    function switchDockTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.querySelectorAll('.dock-item').forEach(di => di.classList.remove('active'));
+
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+
+      if (el) {
+        el.classList.add('active');
+      } else {
+        const found = Array.from(document.querySelectorAll('.dock-item')).find(item => item.getAttribute('onclick')?.includes(tabId));
+        if (found) found.classList.add('active');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Theme Toggle
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function openSupport() {
+      if (tg) tg.openTelegramLink("https://t.me/noenoeslotagency");
+      else window.open("https://t.me/noenoeslotagency", "_blank");
+    }
+
+    // Deposit & Withdraw Modals
+    
+    function copyText(str, successMsg) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(str).then(() => alert(successMsg || 'ကူးယူပြီးပါပြီ!'));
+      } else {
+        prompt('ကူးယူရန်:', str);
+      }
+    }
+
+    function switchBetPayTab(method) {
+      selectedBetPayMethod = method;
+      document.getElementById('btnBetTabKpay')?.classList.toggle('active', method === 'kpay');
+      document.getElementById('btnBetTabPromptpay')?.classList.toggle('active', method === 'promptpay');
+      const pK = document.getElementById('panelBetKpay');
+      const pP = document.getElementById('panelBetPromptpay');
+      if (pK) pK.style.display = (method === 'kpay') ? 'block' : 'none';
+      if (pP) pP.style.display = (method === 'promptpay') ? 'block' : 'none';
+    }
+
+    function switchDepPayTab(method) {
+      selectedDepPayMethod = method;
+      document.getElementById('btnDepTabKpay')?.classList.toggle('active', method === 'kpay');
+      document.getElementById('btnDepTabPromptpay')?.classList.toggle('active', method === 'promptpay');
+      const pK = document.getElementById('panelDepKpay');
+      const pP = document.getElementById('panelDepPromptpay');
+      if (pK) pK.style.display = (method === 'kpay') ? 'block' : 'none';
+      if (pP) pP.style.display = (method === 'promptpay') ? 'block' : 'none';
+    }
+
+    function openBetPayQrModal(bet) {
+      currentPendingBet = bet;
+      const unit = bet.unit || (bet.currency === 'MMK' ? 'ကျပ်' : 'ဘတ် (THB)');
+      document.getElementById('betModalType').innerText = bet.type + ' (' + bet.slot + ')';
+      document.getElementById('betModalNumbers').innerText = bet.numbers.join(', ') + ' (' + bet.numbers.length + ' ကွက်)';
+      document.getElementById('betModalTotal').innerText = bet.total_amount.toLocaleString() + ' ' + unit;
+      document.getElementById('betTxnInput').value = '';
+      if (bet.currency === 'THB') {
+        switchBetPayTab('promptpay');
+      } else {
+        switchBetPayTab('kpay');
+      }
+      document.getElementById('betPayQrModal').classList.add('active');
+    }
+
+    function closeBetPayQrModal() {
+      document.getElementById('betPayQrModal').classList.remove('active');
+      currentPendingBet = null;
+    }
+
+    function confirmBankBetPayment() {
+      if (!currentPendingBet) return;
+      const txn = document.getElementById('betTxnInput').value.trim();
+      if (!txn) {
+        alert("⚠️ ကျေးဇူးပြု၍ ပိုက်ဆံလွှဲပြီးသော လုပ်ငန်းစဉ်အမှတ် (Txn ID သို့မဟုတ် နောက်ဆုံး ၆ လုံး) ထည့်သွင်းပေးပါခင်ဗျာ!");
+        return;
+      }
+
+      const bet = currentPendingBet;
+      const tktId = 'TKT-' + Math.floor(10000 + Math.random() * 90000);
+      const methodName = selectedBetPayMethod === 'promptpay' ? 'PromptPay (Prove Pay)' : 'KBZPay (KPay)';
+
+      const payload = {
+        action: "place_bet",
+        type: bet.type,
+        ticket_id: tktId,
+        slot: bet.slot,
+        currency: bet.currency || "MMK",
+        payment_mode: "bank_qr",
+        payment_method: methodName,
+        txn_id: txn,
+        numbers: bet.numbers,
+        amount_each: bet.amount_each,
+        total_amount: bet.total_amount,
+        user_name: tgUser?.first_name || 'Customer',
+        user_id: tgUser?.id || 0
+      };
+
+      if (tg && tg.sendData) tg.sendData(JSON.stringify(payload));
+
+      closeBetPayQrModal();
+
+      const multBank = (bet.currency === 'THB') ? (bet.type === '3D' ? 500 : 85) : (bet.type === '3D' ? 700 : 85);
+      const winBank = bet.amount_each * multBank;
+      showVoucher(`${bet.type} ထိုးငွေ ပြေစာထွက်ရှိပါပြီ`, tktId, `
+        <b>အမျိုးအစား:</b> ${bet.type} (${bet.slot})<br>
+        <b>ဂဏန်းများ:</b> ${bet.numbers.join(', ')} (${bet.numbers.length} ကွက်)<br>
+        <b>တစ်ကွက်ထိုး:</b> ${bet.amount_each.toLocaleString()} ${bet.unit || "ကျပ်"} (ပေါက်ကြေး: ${winBank.toLocaleString()} ${bet.unit || "ကျပ်"})<br>
+        <b>ငွေပေးချေမှု:</b> 💳 ဘဏ်ငွေ / QR Pay (${methodName})<br>
+        <b>လုပ်ငန်းစဉ်အမှတ်:</b> #${txn}<br>
+        <b>စုစုပေါင်း:</b> <b style="color:var(--primary-blue);">${bet.total_amount.toLocaleString()} ${bet.unit || "ကျပ်"}</b><br>
+        <b>အခြေအနေ:</b> ✅ အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ!
+      `);
+
+      if (bet.type === '2D') clearSelectedNumbers();
+      if (bet.type === '3D') document.getElementById('input3dNumbers').value = '';
+    }
+
+    function openDepositModal() {
+      document.getElementById('depositModal').classList.add('active');
+    }
+    function closeDepositModal() {
+      document.getElementById('depositModal').classList.remove('active');
+    }
+
+    function openWithdrawModal() {
+      const u = tgUser ? `${tgUser.first_name} (ID: ${tgUser.id})` : "Customer";
+      const msg = `မင်္ဂလာပါ Admin ခင်ဗျာ၊ Wallet လက်ကျန်ငွေ (${userWalletBal.toLocaleString()} ကျပ်) အား ငွေထုတ်ယူလိုပါသည်ခင်ဗျာ။ User: ${u}`;
+      const url = `https://t.me/noenoeslotagency?text=${encodeURIComponent(msg)}`;
+      if (tg) tg.openTelegramLink(url);
+      else window.open(url, "_blank");
+    }
+
+    function copyKPayNumber() {
+      const num = paymentAccounts.kpay?.number || "09766646412";
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(num).then(() => {
+          alert(`✅ KBZPay နံပါတ် (${num}) အား ကူးယူပြီးပါပြီ!`);
+        });
+      } else {
+        prompt("KBZPay နံပါတ် ကူးယူရန်:", num);
+      }
+    }
+
+    function submitDepositForm() {
+      const amt = parseInt(document.getElementById('depAmountInput').value) || 0;
+      const txn = document.getElementById('depTxnInput').value.trim();
+
+      if (amt <= 0) {
+        alert("ငွေသွင်းမည့် ပမာဏကို ထည့်သွင်းပေးပါခင်ဗျာ!");
+        return;
+      }
+      if (!txn) {
+        alert("ငွေလွှဲသူ ဖုန်းနံပါတ် (သို့မဟုတ် ပြေစာနောက်ဆုံး ၆ လုံး) ထည့်ပေးပါခင်ဗျာ!");
+        return;
+      }
+
+      const depTicket = 'DEP-' + Math.floor(10000 + Math.random() * 90000);
+      const methodName = selectedDepPayMethod === 'promptpay' ? 'PromptPay (Prove Pay)' : 'KBZPay (KPay)';
+      const payload = {
+        action: "deposit_request",
+        deposit_id: depTicket,
+        method: selectedDepPayMethod,
+        payment_method: methodName,
+        amount: amt,
+        currency: "MMK",
+        txn_id: txn,
+        user_id: tgUser?.id || 0,
+        user_name: tgUser?.first_name || "Customer"
+      };
+
+      if (tg && tg.sendData) {
+        tg.sendData(JSON.stringify(payload));
+      }
+
+      closeDepositModal();
+      showVoucher("ငွေသွင်း လျှောက်ထားလွှာ ပေးပို့ပြီးပါပြီ", depTicket, `
+        <b>ပြေစာအမှတ်:</b> ${depTicket}<br>
+        <b>ငွေသွင်းနည်းလမ်း:</b> KBZPay (KPay)<br>
+        <b>ငွေပမာဏ:</b> ${amt.toLocaleString()} ကျပ်<br>
+        <b>ငွေလွှဲအချက်အလက်:</b> ${txn}<br>
+        <b>အခြေအနေ:</b> Admin အတည်ပြုရန် စောင့်ဆိုင်းနေပါသည်
+      `);
+    }
+
+    // 2D Controls
+    function set2dSession(s, el) {
+      current2dSession = s;
+      document.querySelectorAll('#session2d .seg-btn').forEach(b => b.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+
+    function set2dPayMode(m, el) {
+      current2dPayMode = m;
+      document.querySelectorAll('#payMode2d .seg-btn').forEach(b => b.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+
+    function setAmount2d(amt) {
+      document.getElementById('input2dAmount').value = amt;
+      update2DPreview();
+    }
+
+    function init2DGrid() {
+      const container = document.getElementById('grid2DNumbers');
+      container.innerHTML = '';
+      for (let i = 0; i < 100; i++) {
+        const str = i < 10 ? '0' + i : '' + i;
+        const cell = document.createElement('div');
+        cell.className = 'num-cell';
+        cell.id = 'cell-' + str;
+        cell.innerText = str;
+        cell.onclick = () => toggleNumber(str);
+        container.appendChild(cell);
+      }
+    }
+
+    function toggleNumber(str) {
+      if (selectedNumbers.has(str)) {
+        selectedNumbers.delete(str);
+        document.getElementById('cell-' + str)?.classList.remove('selected');
+      } else {
+        selectedNumbers.add(str);
+        document.getElementById('cell-' + str)?.classList.add('selected');
+      }
+      syncInputs();
+      update2DPreview();
+    }
+
+    function syncInputs() {
+      document.getElementById('input2dNumbers').value = Array.from(selectedNumbers).join(', ');
+    }
+
+    function clearSelectedNumbers() {
+      selectedNumbers.clear();
+      document.querySelectorAll('.num-cell').forEach(c => c.classList.remove('selected'));
+      document.getElementById('input2dNumbers').value = '';
+      update2DPreview();
+    }
+
+    function pickQuickPattern(type) {
+      if (type === 'ပါဝါ') {
+        ['05', '16', '27', '38', '49'].forEach(n => selectedNumbers.add(n));
+      } else if (type === 'နက္ခတ်') {
+        ['07', '18', '24', '35', '69'].forEach(n => selectedNumbers.add(n));
+      } else if (type === 'ညီကို') {
+        ['01', '12', '23', '34', '45', '56', '67', '78', '89', '90'].forEach(n => selectedNumbers.add(n));
+      } else {
+        const val = prompt(`${type} အတွက် ထိပ်စီး/နောက်ပိတ် ဂဏန်း (၀ မှ ၉) တစ်လုံး ထည့်ပါ:`);
+        if (val && !isNaN(val)) {
+          const d = parseInt(val) % 10;
+          for (let i = 0; i < 100; i++) {
+            const s = (i < 10 ? '0' + i : '' + i);
+            if (s.includes(d.toString())) selectedNumbers.add(s);
+          }
+        }
+      }
+      selectedNumbers.forEach(n => document.getElementById('cell-' + n)?.classList.add('selected'));
+      syncInputs();
+      update2DPreview();
+    }
+
+    function update2DPreview() {
+      const amt = parseInt(document.getElementById('input2dAmount').value) || 0;
+      const count = selectedNumbers.size;
+      const total = count * amt;
+      const unit = current2dCurrency === 'MMK' ? ' ကျပ်' : ' ဘတ် (฿)';
+      document.getElementById('previewCount2d').innerText = count + ' ကွက်';
+      document.getElementById('previewTotal2d').innerText = total.toLocaleString() + unit;
+    }
+
+    function submit2DBet() {
+      if (!isMarketOpen) {
+        alert("⛔ ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည် ထိုးလို့မရပါခင်ဗျာ!");
+        return;
+      }
+      const amt = parseInt(document.getElementById('input2dAmount').value) || 0;
+      const nums = Array.from(selectedNumbers);
+
+      if (nums.length === 0) {
+        alert("ထိုးမည့် ဂဏန်းများကို ရွေးချယ်ပေးပါခင်ဗျာ!");
+        return;
+      }
+      if (amt <= 0) {
+        alert("ထိုးငွေပမာဏ သတ်မှတ်ပေးပါခင်ဗျာ!");
+        return;
+      }
+
+      const total = nums.length * amt;
+      const cur = current2dCurrency;
+      const unit = cur === 'MMK' ? 'ကျပ်' : 'ဘတ်';
+      const bal = cur === 'MMK' ? userWalletBalMmk : userWalletBalThb;
+
+      // If Bank / QR Pay mode, open payment & QR modal first!
+      if (current2dPayMode === 'bank_qr') {
+        openBetPayQrModal({
+          type: "2D",
+          slot: current2dSession,
+          numbers: nums,
+          amount_each: amt,
+          total_amount: total,
+          currency: cur,
+          unit: unit
+        });
+        return;
+      }
+
+      // If Wallet mode, check balance
+      if (current2dPayMode === 'wallet' && bal < total) {
+        alert(`⚠️ ${cur} Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!
+
+လိုအပ်ငွေ: ${total.toLocaleString()} ${unit}
+လက်ရှိ လက်ကျန်ငွေ: ${bal.toLocaleString()} ${unit}
+
+ကျေးဇူးပြု၍ "ဘဏ်ငွေ / QR Pay" ဖြင့် လွှဲထိုးရန် ရွေးချယ်ပါ (သို့မဟုတ်) ပင်မ Tab ရှိ + ငွေဖြည့်မည် မှ ငွေအရင် ဖြည့်ပေးပါခင်ဗျာ။`);
+        return;
+      }
+
+      const tktId = 'TKT-' + Math.floor(10000 + Math.random() * 90000);
+      const payload = {
+        action: "place_bet",
+        type: "2D",
+        ticket_id: tktId,
+        slot: current2dSession,
+        currency: cur,
+        payment_mode: current2dPayMode,
+        numbers: nums,
+        amount_each: amt,
+        total_amount: total,
+        user_name: tgUser?.first_name || 'Customer',
+        user_id: tgUser?.id || 0
+      };
+
+      if (tg && tg.sendData) tg.sendData(JSON.stringify(payload));
+
+      const mult2d = 85;
+      const win2d = amt * mult2d;
+      showVoucher("2D ထိုးငွေ ပြေစာထွက်ရှိပါပြီ", tktId, `
+        <b>အမျိုးအစား:</b> 2D (${current2dSession})<br>
+        <b>ဂဏန်းများ:</b> ${nums.join(', ')} (${nums.length} ကွက်)<br>
+        <b>တစ်ကွက်ထိုး:</b> ${amt.toLocaleString()} ${unit} (ပေါက်ကြေး: ${win2d.toLocaleString()} ${unit})<br>
+        <b>ငွေကြေး:</b> ${cur === 'MMK' ? '🇲🇲 မြန်မာကျပ် (MMK)' : '🇹🇭 ထိုင်းဘတ် (THB)'}<br>
+        <b>ငွေပေးချေမှု:</b> 💼 ${cur} Wallet မှ နုတ်ယူပြီး<br>
+        <b>စုစုပေါင်း:</b> <b style="color:var(--primary-blue);">${total.toLocaleString()} ${unit}</b>
+      `);
+      clearSelectedNumbers();
+    }
+
+    // 3D Controls
+    function set3dPayMode(m, el) {
+      current3dPayMode = m;
+      document.querySelectorAll('#payMode3d .seg-btn').forEach(b => b.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+
+    function submit3DBet() {
+      const raw = document.getElementById('input3dNumbers').value;
+      const nums = raw.split(/[\s,]+/).map(s => s.trim()).filter(s => s.length === 3 && !isNaN(s));
+      const amt = parseInt(document.getElementById('input3dAmount').value) || 0;
+
+      if (nums.length === 0) {
+        alert("ကျေးဇူးပြု၍ ၃ လုံး ဂဏန်း (ဥပမာ 224, 781) ထည့်သွင်းပေးပါခင်ဗျာ!");
+        return;
+      }
+      if (amt <= 0) {
+        alert("ထိုးငွေပမာဏ သတ်မှတ်ပေးပါခင်ဗျာ!");
+        return;
+      }
+
+      const total = nums.length * amt;
+      const cur = current3dCurrency;
+      const unit = cur === 'MMK' ? 'ကျပ်' : 'ဘတ်';
+      const bal = cur === 'MMK' ? userWalletBalMmk : userWalletBalThb;
+
+      // If Bank / QR Pay mode, open payment & QR modal first!
+      if (current3dPayMode === 'bank_qr') {
+        openBetPayQrModal({
+          type: "3D",
+          slot: "3D (03:30 PM)",
+          numbers: nums,
+          amount_each: amt,
+          total_amount: total,
+          currency: cur,
+          unit: unit
+        });
+        return;
+      }
+
+      // If Wallet mode, check balance
+      if (current3dPayMode === 'wallet' && bal < total) {
+        alert(`⚠️ ${cur} Wallet လက်ကျန်ငွေ မလုံလောက်ပါခင်ဗျာ!
+
+လိုအပ်ငွေ: ${total.toLocaleString()} ${unit}
+လက်ရှိ လက်ကျန်ငွေ: ${bal.toLocaleString()} ${unit}
+
+ကျေးဇူးပြု၍ "ဘဏ်ငွေ / QR Pay" ဖြင့် လွှဲထိုးရန် ရွေးချယ်ပါ (သို့မဟုတ်) KBZPay/PromptPay မှ ငွေအရင် ဖြည့်ပေးပါခင်ဗျာ။`);
+        return;
+      }
+
+      const tktId = 'TKT-' + Math.floor(10000 + Math.random() * 90000);
+      const payload = {
+        action: "place_bet",
+        type: "3D",
+        ticket_id: tktId,
+        slot: "3D (03:30 PM)",
+        currency: cur,
+        payment_mode: current3dPayMode,
+        numbers: nums,
+        amount_each: amt,
+        total_amount: total,
+        user_name: tgUser?.first_name || 'Customer',
+        user_id: tgUser?.id || 0
+      };
+
+      if (tg && tg.sendData) tg.sendData(JSON.stringify(payload));
+
+      const mult3d = (cur === 'THB') ? 500 : 700;
+      const win3d = amt * mult3d;
+      showVoucher("3D ထိုးငွေ ပြေစာထွက်ရှိပါပြီ", tktId, `
+        <b>အမျိုးအစား:</b> 3D (ထိုင်းအစိုးရထီ)<br>
+        <b>ဂဏန်းများ:</b> ${nums.join(', ')} (${nums.length} ကွက်)<br>
+        <b>တစ်ကွက်ထိုး:</b> ${amt.toLocaleString()} ${unit} (ပေါက်ကြေး: ${win3d.toLocaleString()} ${unit})<br>
+        <b>ငွေကြေး:</b> ${cur === 'MMK' ? '🇲🇲 မြန်မာကျပ် (MMK)' : '🇹🇭 ထိုင်းဘတ် (THB)'}<br>
+        <b>ငွေပေးချေမှု:</b> 💼 ${cur} Wallet မှ နုတ်ယူပြီး<br>
+        <b>စုစုပေါင်း:</b> <b style="color:var(--primary-blue);">${total.toLocaleString()} ${unit}</b>
+      `);
+      document.getElementById('input3dNumbers').value = '';
+    }
+
+    // Voucher Display
+    function showVoucher(title, ticketId, html) {
+      document.getElementById('voucherTitle').innerText = title;
+      document.getElementById('voucherTicketId').innerText = '#' + ticketId;
+      document.getElementById('voucherContent').innerHTML = html;
+      document.getElementById('voucherModal').classList.add('active');
+    }
+    function closeVoucherModal() {
+      document.getElementById('voucherModal').classList.remove('active');
+    }
+
+    // Roulette Lucky Wheel Logic
+    // Default Chance (ပေါက်နိုင်ခြေ ရာခိုင်နှုန်း) သတ်မှတ်ချက်
+    const wheelSegments = [
+      { text: '+500 ကျပ်', color: '#1e50ff', chance: 35 },
+      { text: 'ကံစမ်း 2D', color: '#10b981', chance: 20 },
+      { text: '+1,000 ကျပ်', color: '#f59e0b', chance: 20 },
+      { text: '+200 ကျပ်', color: '#8b5cf6', chance: 15 },
+      { text: 'နောက်တစ်ခါ', color: '#64748b', chance: 5 },
+      { text: '+5,000 ကျပ်', color: '#ec4899', chance: 5 }
+    ];
+    let wheelAngle = 0;
+    let isSpinning = false;
+
+    function drawWheel() {
+      const canvas = document.getElementById('wheelCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const numSegs = wheelSegments.length;
+      const arc = (2 * Math.PI) / numSegs;
+      const radius = canvas.width / 2;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < numSegs; i++) {
+        const angle = wheelAngle + i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = wheelSegments[i].color;
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius - 4, angle, angle + arc);
+        ctx.lineTo(radius, radius);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Text
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText(wheelSegments[i].text, radius - 16, 4);
+        ctx.restore();
+      }
+
+      // Center circle
+      ctx.beginPath();
+      ctx.arc(radius, radius, 22, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    function checkDailySpin() {
+      const uid = tgUser?.id || 'guest';
+      const today = new Date().toISOString().slice(0, 10);
+      const spinKey = 'lucky_spin_' + uid + '_' + today;
+      const btn = document.getElementById('btnSpinWheel');
+
+      if (localStorage.getItem(spinKey) === 'done') {
+        if (btn) {
+          btn.disabled = true;
+          btn.style.opacity = '0.5';
+          btn.style.pointerEvents = 'none';
+          btn.innerHTML = '<span>🔒</span> ယနေ့ ကံစမ်းခွင့် သုံးပြီးပါပြီ';
+        }
+        const savedVoucher = localStorage.getItem('lucky_spin_voucher_' + uid + '_' + today) || '';
+        document.getElementById('wheelResultText').innerHTML = `
+          <div style="background:rgba(239,68,68,0.08); border:1px solid #ef4444; border-radius:12px; padding:12px; margin-top:10px;">
+            <div style="font-size:14px; font-weight:700; color:#ef4444;">🔒 ယနေ့အတွက် ကံစမ်းမဲ (၁) ကြိမ် အသုံးပြုပြီးပါပြီ!</div>
+            <div style="font-size:12px; color:var(--text-sub); margin-top:4px;">⏰ မနက်ဖြန်တွင် နောက်ထပ် (၁) ကြိမ် ထပ်မံ လှည့်နိုင်ပါသည်ခင်ဗျာ။</div>
+            ${savedVoucher ? `<div style="margin-top:8px; font-size:13px; color:var(--text-main);">🎫 ယနေ့ ရရှိခဲ့သော ဆု: <b style="color:var(--primary-blue);">${savedVoucher}</b></div>` : ''}
+            <div style="margin-top:8px; font-size:12px; color:#ef4444; font-weight:600; line-height:1.5;">
+              ⚠️ ဆုကြေးငွေ ထုတ်ယူရန် ဤပြေစာနံပါတ်အား Admin ဆီသို့ Screenshot သို့မဟုတ် စာရင်း ပေးပို့ပေးပါခင်ဗျာ!
+            </div>
+            <a href="https://t.me/noenoeslotagency" target="_blank" style="display:inline-block; margin-top:10px; padding:8px 18px; background:#0088cc; color:#fff; border-radius:8px; text-decoration:none; font-weight:700; font-size:12px; box-shadow:0 3px 6px rgba(0,136,204,0.3);">
+              💬 Admin ဆီသို့ ပြေစာ ပို့မည် (@noenoeslotagency)
+            </a>
+          </div>`;
+      } else {
+        if (btn) {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = 'auto';
+          btn.innerHTML = '<span>🎰</span> ဘီးစလှည့်မည် (Spin Now)';
+        }
+      }
+    }
+
+    function spinLuckyWheel() {
+      const uid = tgUser?.id || 'guest';
+      const today = new Date().toISOString().slice(0, 10);
+      const spinKey = 'lucky_spin_' + uid + '_' + today;
+
+      if (localStorage.getItem(spinKey) === 'done') {
+        alert("⚠️ သင်သည် ယနေ့အတွက် ကံစမ်းခွင့် (၁) ကြိမ် အသုံးပြုပြီးပါပြီ!
+မနက်ဖြန်တွင် ထပ်မံ လှည့်နိုင်ပါသည်ခင်ဗျာ။");
+        return;
+      }
+
+      if (isSpinning) return;
+      isSpinning = true;
+
+      const btn = document.getElementById('btnSpinWheel');
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<span>⏳</span> လည်နေပါသည်...';
+      }
+      document.getElementById('wheelResultText').innerText = "🎰 ဘီးလည်နေပါသည်... စောင့်ဆိုင်းပေးပါ!";
+
+      // Default Chance အရ ဆုမဲ ကြိုတင် ရွေးချယ်ခြင်း (Weighted Chance Picker)
+      const totalChance = wheelSegments.reduce((sum, s) => sum + (s.chance || 1), 0);
+      let randVal = Math.random() * totalChance;
+      let targetIdx = 0;
+      for (let i = 0; i < wheelSegments.length; i++) {
+        if (randVal < wheelSegments[i].chance) {
+          targetIdx = i;
+          break;
+        }
+        randVal -= wheelSegments[i].chance;
+      }
+
+      const numSegs = wheelSegments.length;
+      const arc = (2 * Math.PI) / numSegs;
+      // Pointer is at Top (1.5 * PI). Calculate angle to stop exactly on targetIdx
+      const extraRounds = 6 * 2 * Math.PI;
+      const stopCenter = (1.5 * Math.PI) - (targetIdx + 0.5) * arc;
+      const currentMod = wheelAngle % (2 * Math.PI);
+      let diff = (stopCenter - currentMod) % (2 * Math.PI);
+      if (diff < 0) diff += 2 * Math.PI;
+      const targetAngle = wheelAngle + extraRounds + diff;
+
+      const startTime = performance.now();
+      const duration = 4000;
+
+      function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        wheelAngle = wheelAngle + (targetAngle - wheelAngle) * easeOut;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          wheelAngle = targetAngle;
+          drawWheel();
+          isSpinning = false;
+          const prize = wheelSegments[targetIdx];
+
+          const voucherCode = '#SPIN-' + Math.floor(10000 + Math.random() * 90000);
+          localStorage.setItem(spinKey, 'done');
+          localStorage.setItem('lucky_spin_voucher_' + uid + '_' + today, `${prize.text} (${voucherCode})`);
+
+          if (btn) {
+            btn.innerHTML = '<span>🔒</span> ယနေ့ ကံစမ်းခွင့် သုံးပြီးပါပြီ';
+          }
+
+          document.getElementById('wheelResultText').innerHTML = `
+            <div style="background:rgba(16,185,129,0.1); border:1px solid #10b981; border-radius:12px; padding:14px; margin-top:10px; animation: popIn 0.3s ease;">
+              <div style="font-size:16px; font-weight:800; color:#10b981;">🎉 ဂုဏ်ယူပါသည်! သင်သည် ${prize.text} ကံထူးပါသည်!</div>
+              <div style="margin-top:6px; font-size:13px; color:var(--text-main);">
+                🎫 သင်၏ ဆုကြေးပြေစာနံပါတ်: <b style="color:var(--primary-blue); font-family:monospace; font-size:15px;">${voucherCode}</b>
+              </div>
+              <div style="margin-top:6px; font-size:12px; color:var(--text-sub);">
+                ⏰ ယနေ့အတွက် (၁) ကြိမ် သုံးပြီးပါပြီ။ မနက်ဖြန်တွင် နောက်ထပ် (၁) ကြိမ် ထပ်မံ လှည့်နိုင်ပါသည်ခင်ဗျာ။
+              </div>
+              <div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.12); border-left:4px solid #ef4444; border-radius:6px; font-size:12px; color:#ef4444; font-weight:700; line-height:1.6; text-align:left;">
+                ⚠️ <b>အရေးကြီးပါသည်:</b> ဆုကြေးငွေ ထုတ်ယူရန် ဤပြေစာနံပါတ်အား Admin ဆီသို့ Screenshot သို့မဟုတ် စာရင်း ပေးပို့ပေးပါခင်ဗျာ!
+              </div>
+              <a href="https://t.me/noenoeslotagency" target="_blank" style="display:inline-block; margin-top:12px; padding:10px 20px; background:#0088cc; color:#fff; border-radius:8px; text-decoration:none; font-weight:800; font-size:13px; box-shadow:0 4px 10px rgba(0,136,204,0.35);">
+                💬 Admin ဆီသို့ ပြေစာ ပို့မည် (@noenoeslotagency)
+              </a>
+            </div>`;
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    // Polling API Data
+    async function fetchRealtimeData() {
+      try {
+        const uid = tgUser?.id || '';
+        const res = await fetch(`/api/data?user_id=${uid}`);
+        if (!res.ok) return;
+        const d = await res.json();
+
+        // Balance (MMK & THB)
+        if (d.user_balance) {
+          userWalletBalMmk = d.user_balance.mmk || 0;
+          userWalletBalThb = d.user_balance.thb || 0;
+          const elMmk = document.getElementById('homeBalanceMmk');
+          if (elMmk) elMmk.innerText = userWalletBalMmk.toLocaleString();
+          const elThb = document.getElementById('homeBalanceThb');
+          if (elThb) elThb.innerText = userWalletBalThb.toLocaleString();
+        }
+
+        // Payment Accounts (KPay & PromptPay)
+        if (d.payment_accounts) {
+          if (d.payment_accounts.kpay) {
+            paymentAccounts.kpay = d.payment_accounts.kpay;
+            const kname = paymentAccounts.kpay.name;
+            const knum = paymentAccounts.kpay.number;
+            const kqr = paymentAccounts.kpay.qr || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${knum}`;
+            ['modalKpayName', 'betKpayName', 'recKpayName'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.innerText = kname;
+            });
+            ['modalKpayNumber', 'betKpayNum', 'recKpayNumber'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.innerText = knum;
+            });
+            ['modalKpayQr', 'betQrKpayImg'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.src = kqr;
+            });
+          }
+
+          if (d.payment_accounts.promptpay) {
+            paymentAccounts.promptpay = d.payment_accounts.promptpay;
+            const pname = paymentAccounts.promptpay.name;
+            const pnum = paymentAccounts.promptpay.number;
+            const pqr = paymentAccounts.promptpay.qr || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${pnum}`;
+            ['modalPromptpayName', 'betPromptpayName', 'recPromptpayName'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.innerText = pname;
+            });
+            ['modalPromptpayNumber', 'betPromptpayNum', 'recPromptpayNumber'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.innerText = pnum;
+            });
+            ['modalPromptpayQr', 'betQrPromptpayImg'].forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.src = pqr;
+            });
+          }
+        }
+
+        // 2D Live
+        if (d.twod) {
+          isMarketOpen = d.twod.is_open;
+          const statusText = document.getElementById('home2dStatusText');
+          const banner = document.getElementById('holidayBanner2d');
+          const submitBtn = document.getElementById('btnSubmit2d');
+
+          if (!isMarketOpen) {
+            if (statusText) statusText.innerHTML = '<span class="status-closed">●</span> ယနေ့ ပိတ်ရက်';
+            if (banner) banner.style.display = 'block';
+            if (submitBtn) {
+              submitBtn.innerText = '⛔ ယနေ့ 2D ပိတ်ရက်ဖြစ်ပါသည် ထိုးလို့မရပါ';
+              submitBtn.style.background = '#94a3b8';
+            }
+          } else {
+            if (statusText) statusText.innerHTML = '<span class="status-open">●</span> ဖွင့်လှစ်ထားပါသည်';
+            if (banner) banner.style.display = 'none';
+            if (submitBtn) {
+              submitBtn.innerText = '👉 2D ထိုးငွေ အတည်ပြုမည်';
+              submitBtn.style.background = 'var(--primary-blue)';
+            }
+          }
+
+          if (d.twod.morning_1201 && d.twod.morning_1201 !== '--') {
+            document.getElementById('homeMorningVal').innerText = d.twod.morning_1201;
+            document.getElementById('homeMorningSub').innerText = 'ထွက်ပြီး';
+          }
+          if (d.twod.evening_1630 && d.twod.evening_1630 !== '--') {
+            document.getElementById('homeEveningVal').innerText = d.twod.evening_1630;
+            document.getElementById('homeEveningSub').innerText = 'ထွက်ပြီး';
+          }
+
+          if (d.twod.live_set) document.getElementById('tickerSetVal').innerText = d.twod.live_set;
+          if (d.twod.live_value) document.getElementById('tickerValVal').innerText = d.twod.live_value;
+        }
+
+        // 3D Live
+        if (d.threed) {
+          if (d.threed.first_prize) document.getElementById('gloFirstPrize').innerText = d.threed.first_prize;
+          if (d.threed.threed) document.getElementById('gloThreeD').innerText = d.threed.threed;
+          if (d.threed.adjacent_threed) document.getElementById('gloAdjThreed').innerText = d.threed.adjacent_threed.join(', ');
+          if (d.threed.front_3d) document.getElementById('gloFront3d').innerText = d.threed.front_3d.join(', ');
+          if (d.threed.back_3d) document.getElementById('gloBack3d').innerText = d.threed.back_3d.join(', ');
+          if (d.threed.back_2d) document.getElementById('gloBack2d').innerText = d.threed.back_2d;
+          if (d.threed.date) {
+            document.getElementById('gloDrawDate').innerText = 'ရက်စွဲ: ' + d.threed.date;
+            if (document.getElementById('recGloDate')) document.getElementById('recGloDate').innerText = d.threed.date;
+          }
+          if (d.threed.first_prize && document.getElementById('recGloFirst')) document.getElementById('recGloFirst').innerText = d.threed.first_prize;
+          if (d.threed.threed && document.getElementById('recGlo3D')) document.getElementById('recGlo3D').innerText = d.threed.threed;
+          if (d.threed.back_2d && document.getElementById('recGlo2D')) document.getElementById('recGlo2D').innerText = d.threed.back_2d;
+          if (d.threed.source && document.getElementById('gloSourceText')) document.getElementById('gloSourceText').innerText = '🌐 ' + d.threed.source;
+        }
+      } catch (e) {
+        console.log("Fetch err:", e);
+      }
+    }
+
+    // Check URL Hash for direct navigation from Telegram bot buttons (#twod, #threed, #spin)
+    function handleUrlHash() {
+      const hash = (window.location.hash || '').replace('#', '').toLowerCase();
+      if (['home', 'twod', 'threed', 'spin', 'records'].includes(hash)) {
+        switchDockTab(hash);
+      }
+    }
+
+    // Init
+    init2DGrid();
+    drawWheel();
+    checkDailySpin();
+    handleUrlHash();
+    window.addEventListener('hashchange', handleUrlHash);
+    fetchRealtimeData();
+    setInterval(fetchRealtimeData, 4000);
+  </script>
+</body>
+</html>
