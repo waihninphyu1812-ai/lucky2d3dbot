@@ -1,16 +1,7 @@
 {
-  "version": 2,
   "rewrites": [
     {
-      "source": "/api/data",
-      "destination": "/api/data.py"
-    },
-    {
-      "source": "/api/webhook",
-      "destination": "/api/webhook.py"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
