@@ -120,7 +120,7 @@ def calculate_2d(set_val, val_val):
         if "." in s_str and "." in v_str:
             d1 = s_str.split(".")[1][-1]
             d2 = v_str.split(".")[1][-1]
-            return str(d1) + str(d2)
+            return f"{d1}{d2}"
     except Exception:
         pass
     return None
@@ -327,7 +327,7 @@ def fetch_2d_one_month_history():
                     elif c_time == "16:30":
                         t_430 = c_twod if c_twod else calculate_2d(extract_set(c), extract_value(c))
 
-                msg += "📅 `" + str(d_str) + "` ➜ 12:01 PM: `[" + str(t_12 or '--') + "]` | 04:30 PM: `[" + str(t_430 or '--') + "]`\n"
+                msg += f"📅 `{d_str}` ➜ 12:01 PM: `[{t_12 or '--'}]` | 04:30 PM: `[{t_430 or '--'}]`\n"
                 count += 1
             if count > 0:
                 msg += "━━━━━━━━━━━━━━━━━━━━\n"
@@ -357,7 +357,7 @@ def fetch_3d_three_months_history():
                     num_3d = num[-3:]
                 else:
                     num_3d = num if num else "--"
-                msg += "📅 `" + str(d_str) + "` ➜ ပေါက်ဂဏန်း: `[" + str(num_3d) + "]`\n"
+                msg += f"📅 `{d_str}` ➜ ပေါက်ဂဏန်း: `[{num_3d}]`\n"
                 count += 1
             if count > 0:
                 msg += "━━━━━━━━━━━━━━━━━━━━\n"
@@ -459,16 +459,14 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # 💵 ငွေလက်ကျန်
     elif text == "💵 ငွေလက်ကျန်":
         bal = user_balances.get(user_id, {"mmk": 0, "thb": 0})
-        bal_mmk = bal.get("mmk", 0)
-        bal_thb = bal.get("thb", 0)
         bal_text = (
-            "💵 *လက်ရှိ ငွေစာရင်းလက်ကျန်*\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"💵 *လက်ရှိ ငွေစာရင်းလက်ကျန်*\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👤 အမည်: *{user_name}*\n"
             f"🆔 User ID: `{user_id}`\n\n"
-            f"🇲🇲 မြန်မာကျပ်: *{bal_mmk:,} MMK*\n"
-            f"🇹🇭 ထိုင်းဘတ်: *{bal_thb:,} THB*\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"🇲🇲 မြန်မာကျပ်: *{bal['mmk']:,} MMK*\n"
+            f"🇹🇭 ထိုင်းဘတ်: *{bal['thb']:,} THB*\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
             f"💡 ငွေဖြည့်သွင်းလိုပါက [Admin Account](https://t.me/{ADMIN_USERNAME}) သို့ ဆက်သွယ်နိုင်ပါသည်။"
         )
         kb = InlineKeyboardMarkup([
@@ -527,17 +525,11 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             msg = "📜 *သင်ထိုးထားသော ဘောက်ချာမှတ်တမ်းများ*\n━━━━━━━━━━━━━━━━━━━━\n"
             for b in bets[-10:]:
-                t_id = b.get("ticket", "")
-                t_time = b.get("time", "")
-                t_nums = b.get("numbers", "")
-                t_amt = b.get("total_amount", 0)
-                t_curr = b.get("currency", "")
-                t_stat = b.get("status", "")
-                msg += f"🎫 လက်မှတ်: `#{t_id}`\n"
-                msg += f"📅 နေ့စွဲ: `{t_time}`\n"
-                msg += f"🔢 ဂဏန်း: *{t_nums}*\n"
-                msg += f"💵 စုစုပေါင်း: *{t_amt:,} {t_curr}*\n"
-                msg += f"📌 အခြေအနေ: `{t_stat}`\n"
+                msg += f"🎫 လက်မှတ်: `#{b['ticket']}`\n"
+                msg += f"📅 နေ့စွဲ: `{b['time']}`\n"
+                msg += f"🔢 ဂဏန်း: *{b['numbers']}*\n"
+                msg += f"💵 စုစုပေါင်း: *{b['total_amount']:,} {b['currency']}*\n"
+                msg += f"📌 အခြေအနေ: `{b['status']}`\n"
                 msg += "────────────────────\n"
         await update.message.reply_text(msg, parse_mode="Markdown")
 
@@ -658,7 +650,7 @@ async def process_bet_submission(update: Update, context: ContextTypes.DEFAULT_T
         f"👤 အမည်: *{user_name}*\n"
         f"📅 နေ့စွဲ/အချိန်: `{now.strftime('%d-%m-%Y %I:%M:%S %p')}`\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "🔢 ထိုးထားသော ဂဏန်းများ:\n"
+        f"🔢 ထိုးထားသော ဂဏန်းများ:\n"
     )
     for n, a in valid_bets:
         rate = "1:85" if currency == "MMK" and len(n) == 2 else ("1:90" if currency == "THB" and len(n) == 2 else "1:700")
@@ -748,42 +740,25 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         s_15 = data_2d["slots"]["15:00"]
         s_16 = data_2d["slots"]["16:30"]
 
-        d2_date = data_2d.get("date", "")
-        d2_time = data_2d.get("live_time", "")
-        d2_set = data_2d.get("live_set", "--")
-        d2_val = data_2d.get("live_value", "--")
-        d2_live = data_2d.get("live_2d", "--")
-        d3_date = data_3d.get("date", "--")
-        d3_last = data_3d.get("last_3d", "--")
-
-        s11_tw = s_11.get("twod", "--")
-        s11_st = s_11.get("status", "")
-        s12_tw = s_12.get("twod", "--")
-        s12_st = s_12.get("status", "")
-        s15_tw = s_15.get("twod", "--")
-        s15_st = s_15.get("status", "")
-        s16_tw = s_16.get("twod", "--")
-        s16_st = s_16.get("status", "")
-
         msg = (
-            "🏆 *ယနေ့ တရားဝင် ထွက်ဂဏန်းများ* 🏆\n"
-            f"📅 နေ့စွဲ: `{d2_date}`\n"
-            f"⏰ Live အချိန်: `{d2_time}`\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "🇹🇭 *ထိုင်း 2D Live (SET စတော့အိတ်ချိန်း)*\n"
-            f"• SET: `{d2_set}` | Value: `{d2_val}`\n"
-            f"👉 လက်ရှိ 2D Live: 🔥 `[{d2_live}]` 🔥\n\n"
-            "⏰ *ယနေ့ အချိန်အလိုက် ထွက်ရှိမှုများ:*\n"
-            f"• 11:00 AM ➜ `[{s11_tw}]` ({s11_st})\n"
-            f"• 12:01 PM ➜ `[{s12_tw}]` ({s12_st})\n"
-            f"• 03:00 PM ➜ `[{s15_tw}]` ({s15_st})\n"
-            f"• 04:30 PM ➜ `[{s16_tw}]` ({s16_st})\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "🇹🇭 *ထိုင်း 3D တရားဝင်ထီ (GLO Official)*\n"
-            f"• ထွက်သည့်ရက်: `{d3_date}`\n"
-            f"👉 နောက်ဆုံးထွက် 3D: 🔥 `[{d3_last}]` 🔥\n"
-            "━━━━━━━━━━━━━━━━━━━━\n"
-            "💡 *စမ်းသပ်ဒေတာတုများ လုံးဝမပါဝင်ပါ။ တရားဝင် API မှ တိုက်ရိုက်ရယူထားပါသည်။*"
+            f"🏆 *ယနေ့ တရားဝင် ထွက်ဂဏန်းများ* 🏆\n"
+            f"📅 နေ့စွဲ: `{data_2d['date']}`\n"
+            f"⏰ Live အချိန်: `{data_2d['live_time']}`\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🇹🇭 *ထိုင်း 2D Live (SET စတော့အိတ်ချိန်း)*\n"
+            f"• SET: `{data_2d['live_set']}` | Value: `{data_2d['live_value']}`\n"
+            f"👉 လက်ရှိ 2D Live: 🔥 `[{data_2d['live_2d']}]` 🔥\n\n"
+            f"⏰ *ယနေ့ အချိန်အလိုက် ထွက်ရှိမှုများ:*\n"
+            f"• 11:00 AM ➜ `[{s_11['twod']}]` ({s_11['status']})\n"
+            f"• 12:01 PM ➜ `[{s_12['twod']}]` ({s_12['status']})\n"
+            f"• 03:00 PM ➜ `[{s_15['twod']}]` ({s_15['status']})\n"
+            f"• 04:30 PM ➜ `[{s_16['twod']}]` ({s_16['status']})\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🇹🇭 *ထိုင်း 3D တရားဝင်ထီ (GLO Official)*\n"
+            f"• ထွက်သည့်ရက်: `{data_3d['date']}`\n"
+            f"👉 နောက်ဆုံးထွက် 3D: 🔥 `[{data_3d['last_3d']}]` 🔥\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"💡 *စမ်းသပ်ဒေတာတုများ လုံးဝမပါဝင်ပါ။ တရားဝင် API မှ တိုက်ရိုက်ရယူထားပါသည်။*"
         )
 
         kb = InlineKeyboardMarkup([
